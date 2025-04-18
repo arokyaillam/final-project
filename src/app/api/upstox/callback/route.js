@@ -74,8 +74,7 @@ export async function GET(request) {
     const authToken = request.cookies.get('token')?.value;
     console.log('Auth token found:', authToken ? 'Yes' : 'No');
 
-    // Check if we have a userId in the query parameters (for direct callback handling)
-    const userId = searchParams.get('userId');
+    // We already have userId from the query parameters above
 
     if (!authToken && !userId) {
       console.log('No auth token or userId found, redirecting to login');
