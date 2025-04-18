@@ -1,0 +1,91 @@
+import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import connectToDatabase from '@/lib/db/mongodb';
+import User from '@/lib/db/models/User';
+import UpstoxToken from '@/lib/db/models/UpstoxToken';
+import { verifyToken } from '@/lib/auth/jwt';
+import { getAccessToken } from '@/services/upstox';
+
+export async function GET(request) {
+  try {
+    // Get authorization code from query parameters
+    const { searchParams } = new URL(request.url);
+    const code = searchParams.get('code');
+    
+    if (!code) {
+      return NextResponse.redirect(new URL('/dashboard?error=no_code', request.url));
+    }
+    
+    // Get user from JWT token
+    const cookieStore = cookies();
+    const authToken = cookieStore.get('token')?.value;
+    
+    if (!authToken) {
+      return NextResponse.redirect(new URL('/login?error=not_authenticated', request.url));
+    }
+    
+    const decoded = verifyToken(authToken);
+    if (!decoded || !decoded.userId) {
+      return NextResponse.redirect(new URL('/login?error=invalid_token', request.url));
+    }
+    
+    // Connect to database
+    await connectToDatabase();
+    
+    // Find user
+    const user = await User.findById(decoded.userId);
+    if (!user) {
+      return NextResponse.redirect(new URL('/login?error=user_not_found', request.url));
+    }
+    
+    // Exchange code for access token
+    const tokenData = await getAccessToken(code);
+    
+    if (!tokenData || !tokenData.access_token) {
+      return NextResponse.redirect(new URL('/dashboard?error=token_exchange_failed', request.url));
+    }
+    
+    // Calculate token expiration date
+    const expiresAt = new Date();
+    expiresAt.setSeconds(expiresAt.getSeconds() + tokenData.expires_in);
+    
+    // Save token to database
+    const upstoxTokenData = {
+      userId: user._id,
+      accessToken: tokenData.access_token,
+      refreshToken: tokenData.refresh_token,
+      tokenType: tokenData.token_type,
+      expiresIn: tokenData.expires_in,
+      expiresAt,
+    };
+    
+    // Check if token already exists for user
+    let upstoxToken = await UpstoxToken.findOne({ userId: user._id });
+    
+    if (upstoxToken) {
+      // Update existing token
+      Object.assign(upstoxToken, upstoxTokenData);
+      await upstoxToken.save();
+    } else {
+      // Create new token
+      upstoxToken = await UpstoxToken.create(upstoxTokenData);
+    }
+    
+    // Update user with token info
+    user.upstoxToken = {
+      accessToken: tokenData.access_token,
+      refreshToken: tokenData.refresh_token,
+      expiresIn: tokenData.expires_in,
+      tokenType: tokenData.token_type,
+      expiresAt,
+    };
+    
+    await user.save();
+    
+    // Redirect to dashboard with success message
+    return NextResponse.redirect(new URL('/dashboard?success=upstox_connected', request.url));
+  } catch (error) {
+    console.error('Upstox callback error:', error);
+    return NextResponse.redirect(new URL(`/dashboard?error=${encodeURIComponent(error.message || 'unknown_error')}`, request.url));
+  }
+}
