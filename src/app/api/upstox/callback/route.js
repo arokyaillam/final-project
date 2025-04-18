@@ -113,7 +113,6 @@ export async function GET(request) {
     await user.save();
 
     // Store connection status in session cookie
-    const cookieStore = cookies();
     // Use the cookies API asynchronously
     await cookieStore.set('upstox_connected', 'true', {
       httpOnly: true,
