@@ -33,7 +33,8 @@ export async function GET(request) {
   try {
     // Get JWT token from cookies
     const cookieStore = cookies();
-    const tokenCookie = cookieStore.get('token');
+    // Use the cookies API asynchronously
+    const tokenCookie = await cookieStore.get('token');
     const token = tokenCookie?.value;
 
     if (!token) {

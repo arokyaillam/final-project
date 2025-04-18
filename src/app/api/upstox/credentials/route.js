@@ -49,7 +49,8 @@ export async function POST(request) {
   try {
     // Get user from JWT token
     const cookieStore = cookies();
-    const tokenCookie = cookieStore.get('token');
+    // Use the cookies API asynchronously
+    const tokenCookie = await cookieStore.get('token');
     const authToken = tokenCookie?.value;
 
     if (!authToken) {
@@ -120,7 +121,8 @@ export async function GET(request) {
   try {
     // Get user from JWT token
     const cookieStore = cookies();
-    const tokenCookie = cookieStore.get('token');
+    // Use the cookies API asynchronously
+    const tokenCookie = await cookieStore.get('token');
     const authToken = tokenCookie?.value;
 
     if (!authToken) {

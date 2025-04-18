@@ -68,7 +68,8 @@ export async function GET(request) {
 
     // Get user from JWT token
     const cookieStore = cookies();
-    const tokenCookie = cookieStore.get('token');
+    // Use the cookies API asynchronously
+    const tokenCookie = await cookieStore.get('token');
     const authToken = tokenCookie?.value;
 
     if (!authToken) {
@@ -113,7 +114,8 @@ export async function GET(request) {
 
     // Store connection status in session cookie
     const cookieStore = cookies();
-    cookieStore.set('upstox_connected', 'true', {
+    // Use the cookies API asynchronously
+    await cookieStore.set('upstox_connected', 'true', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       maxAge: 30 * 24 * 60 * 60, // 30 days
