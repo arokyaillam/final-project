@@ -21,8 +21,8 @@ export const connectToUpstox = createAsyncThunk(
       // Get authorization URL
       const response = await api.get('/upstox/auth');
 
-      // Open authorization URL in new window
-      window.open(response.data.authorizationUrl, '_blank');
+      // Open authorization URL in the same window to maintain session cookies
+      window.location.href = response.data.authorizationUrl;
 
       return { initiated: true };
     } catch (error) {

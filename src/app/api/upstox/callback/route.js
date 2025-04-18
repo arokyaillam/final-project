@@ -69,10 +69,14 @@ export async function GET(request) {
     // Get user from JWT token
     // In Next.js 14+, we need to use the cookies API differently
     // We'll use a workaround to avoid the warning
+    console.log('Cookies in request:', request.cookies.getAll());
     const authToken = request.cookies.get('token')?.value;
+    console.log('Auth token found:', authToken ? 'Yes' : 'No');
 
     if (!authToken) {
-      return NextResponse.redirect(new URL('/login?error=not_authenticated', request.url));
+      console.log('No auth token found, redirecting to login');
+      // Store the callback code in a query parameter so we can use it after login
+      return NextResponse.redirect(new URL(`/login?error=not_authenticated&callback_code=${code}`, request.url));
     }
 
     const decoded = verifyToken(authToken);

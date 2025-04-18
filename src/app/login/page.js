@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useDispatch, useSelector } from 'react-redux';
 import { loginUser } from '@/store/slices/authSlice';
@@ -10,20 +10,44 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const router = useRouter();
+  const searchParams = useSearchParams();
   const dispatch = useDispatch();
   const { loading, error } = useSelector((state) => state.auth);
 
+  // Check if we have a callback code from Upstox
+  const callbackCode = searchParams.get('callback_code');
+
+  useEffect(() => {
+    // Store the callback code in localStorage if it exists
+    if (callbackCode) {
+      localStorage.setItem('upstox_callback_code', callbackCode);
+      console.log('Stored callback code in localStorage:', callbackCode);
+    }
+  }, [callbackCode]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!email || !password) {
       return;
     }
-    
+
     const resultAction = await dispatch(loginUser({ email, password }));
-    
+
     if (loginUser.fulfilled.match(resultAction)) {
-      router.push('/dashboard');
+      // Check if we have a stored callback code
+      const storedCallbackCode = localStorage.getItem('upstox_callback_code');
+
+      if (storedCallbackCode) {
+        // Clear the stored code
+        localStorage.removeItem('upstox_callback_code');
+
+        // Redirect to the callback URL with the code
+        router.push(`/api/upstox/callback?code=${storedCallbackCode}`);
+      } else {
+        // Normal login flow
+        router.push('/dashboard');
+      }
     }
   };
 
@@ -41,7 +65,7 @@ export default function LoginPage() {
             </Link>
           </p>
         </div>
-        
+
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="-space-y-px rounded-md shadow-sm">
             <div>
