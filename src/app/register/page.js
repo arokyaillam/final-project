@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useDispatch, useSelector } from 'react-redux';
-import { registerUser } from '@/store/slices/authSlice';
+import { registerUser, checkAuth } from '@/store/slices/authSlice';
+import { isAuthenticated } from '@/lib/cookies';
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('');
@@ -13,33 +14,52 @@ export default function RegisterPage() {
   const [passwordError, setPasswordError] = useState('');
   const router = useRouter();
   const dispatch = useDispatch();
-  const { loading, error } = useSelector((state) => state.auth);
+  const { loading, error, isAuthenticated: isAuthenticatedState, sessionChecked } = useSelector((state) => state.auth);
+
+  // Check for existing session on component mount
+  useEffect(() => {
+    // If already authenticated, redirect to dashboard
+    if (isAuthenticatedState) {
+      router.push('/dashboard');
+      return;
+    }
+
+    // If we haven't checked the session yet, check it
+    if (!sessionChecked && isAuthenticated()) {
+      dispatch(checkAuth()).then((result) => {
+        // If authentication check was successful, redirect to dashboard
+        if (checkAuth.fulfilled.match(result)) {
+          router.push('/dashboard');
+        }
+      });
+    }
+  }, [dispatch, router, sessionChecked, isAuthenticatedState]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Reset password error
     setPasswordError('');
-    
+
     // Validate inputs
     if (!email || !password || !confirmPassword) {
       return;
     }
-    
+
     // Check if passwords match
     if (password !== confirmPassword) {
       setPasswordError('Passwords do not match');
       return;
     }
-    
+
     // Check password length
     if (password.length < 6) {
       setPasswordError('Password must be at least 6 characters');
       return;
     }
-    
+
     const resultAction = await dispatch(registerUser({ email, password }));
-    
+
     if (registerUser.fulfilled.match(resultAction)) {
       router.push('/dashboard');
     }
@@ -59,7 +79,7 @@ export default function RegisterPage() {
             </Link>
           </p>
         </div>
-        
+
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="-space-y-px rounded-md shadow-sm">
             <div>

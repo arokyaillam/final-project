@@ -21,14 +21,19 @@ export default function LoginPage() {
   // Check for existing session on component mount
   useEffect(() => {
     // If we already checked the session and the user is authenticated, redirect to dashboard
-    if (sessionChecked && isAuthenticatedState) {
+    if (isAuthenticatedState) {
       router.push('/dashboard');
       return;
     }
 
     // If we haven't checked the session yet, check it
     if (!sessionChecked && isAuthenticated()) {
-      dispatch(checkAuth());
+      dispatch(checkAuth()).then((result) => {
+        // If authentication check was successful, redirect to dashboard
+        if (checkAuth.fulfilled.match(result)) {
+          router.push('/dashboard');
+        }
+      });
     }
   }, [dispatch, router, sessionChecked, isAuthenticatedState]);
 
