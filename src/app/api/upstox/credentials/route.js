@@ -48,8 +48,9 @@ const UpstoxCredentials = mongoose.models.UpstoxCredentials ||
 export async function POST(request) {
   try {
     // Get user from JWT token
-    // In Next.js 14+, cookies() is already a promise-like object
-    const authToken = cookies().get('token')?.value;
+    // In Next.js 14+, we need to use the cookies API differently
+    const cookiesList = cookies();
+    const authToken = cookiesList.get('token')?.value;
 
     if (!authToken) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -118,8 +119,9 @@ export async function POST(request) {
 export async function GET(request) {
   try {
     // Get user from JWT token
-    // In Next.js 14+, cookies() is already a promise-like object
-    const authToken = cookies().get('token')?.value;
+    // In Next.js 14+, we need to use the cookies API differently
+    const cookiesList = cookies();
+    const authToken = cookiesList.get('token')?.value;
 
     if (!authToken) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

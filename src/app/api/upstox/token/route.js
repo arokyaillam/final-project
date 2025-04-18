@@ -58,8 +58,9 @@ async function refreshAccessToken(refreshToken, credentials) {
 export async function GET(request) {
   try {
     // Get JWT token from cookies
-    // In Next.js 14+, cookies() is already a promise-like object
-    const token = cookies().get('token')?.value;
+    // In Next.js 14+, we need to use the cookies API differently
+    const cookiesList = cookies();
+    const token = cookiesList.get('token')?.value;
 
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
