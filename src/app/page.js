@@ -12,6 +12,9 @@ export default function Home() {
   const dispatch = useDispatch();
   const { isAuthenticated: isAuthenticatedState, sessionChecked } = useSelector((state) => state.auth);
 
+  // State to track if we're checking authentication
+  const [isCheckingAuth, setIsCheckingAuth] = useState(false);
+
   // Check authentication status and redirect if authenticated
   useEffect(() => {
     // If authenticated, redirect to dashboard
@@ -21,15 +24,35 @@ export default function Home() {
     }
 
     // If we haven't checked the session yet but there might be a cookie, check it
-    if (!sessionChecked && isAuthenticated()) {
-      dispatch(checkAuth()).then((result) => {
-        // If authentication check was successful, redirect to dashboard
-        if (checkAuth.fulfilled.match(result)) {
-          router.push('/dashboard');
+    if (!sessionChecked && isAuthenticated() && !isCheckingAuth) {
+      setIsCheckingAuth(true);
+
+      // Add a timeout to prevent infinite loading
+      const timeoutId = setTimeout(() => {
+        // If verification takes too long, assume it failed
+        if (isCheckingAuth) {
+          console.log('Session verification timed out');
+          setIsCheckingAuth(false);
         }
-      });
+      }, 3000); // 3 seconds timeout
+
+      // Dispatch the check auth action
+      dispatch(checkAuth())
+        .unwrap()
+        .then(() => {
+          clearTimeout(timeoutId);
+          router.push('/dashboard');
+        })
+        .catch((error) => {
+          console.error('Auth check failed:', error);
+          clearTimeout(timeoutId);
+          setIsCheckingAuth(false);
+        });
+
+      // Clean up timeout on unmount
+      return () => clearTimeout(timeoutId);
     }
-  }, [dispatch, router, isAuthenticatedState, sessionChecked]);
+  }, [dispatch, router, isAuthenticatedState, sessionChecked, isCheckingAuth]);
 
   return (
     <div className="flex items-center justify-center min-h-screen">

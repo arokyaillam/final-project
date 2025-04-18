@@ -23,10 +23,32 @@ export default function ProtectedRoute({ children }) {
       router.push('/login');
       return;
     }
-    
+
     // If we haven't checked the session yet but there might be a cookie, check it
     if (!sessionChecked && isAuthenticated()) {
-      dispatch(checkAuth());
+      // Add a timeout to prevent infinite loading
+      const timeoutId = setTimeout(() => {
+        // If verification takes too long, assume it failed and redirect to login
+        if (!sessionChecked) {
+          console.log('Session verification timed out, redirecting to login');
+          router.push('/login');
+        }
+      }, 3000); // 3 seconds timeout
+
+      // Dispatch the check auth action
+      dispatch(checkAuth())
+        .unwrap()
+        .then(() => {
+          clearTimeout(timeoutId);
+        })
+        .catch((error) => {
+          console.error('Auth check failed:', error);
+          clearTimeout(timeoutId);
+          router.push('/login');
+        });
+
+      // Clean up timeout on unmount
+      return () => clearTimeout(timeoutId);
     }
   }, [dispatch, router, isAuthenticatedState, sessionChecked]);
 
