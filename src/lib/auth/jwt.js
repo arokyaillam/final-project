@@ -13,10 +13,19 @@ export const signToken = (payload, expiresIn = JWT_EXPIRES_IN) => {
   return jwt.sign(payload, JWT_SECRET, { expiresIn });
 };
 
+/**
+ * Verify a JWT token
+ * @param {string} token - The token to verify
+ * @returns {Object|null} The decoded token payload or null if invalid
+ */
 export const verifyToken = (token) => {
   try {
-    return jwt.verify(token, JWT_SECRET);
+    console.log('JWT Verify - Attempting to verify token');
+    const decoded = jwt.verify(token, JWT_SECRET);
+    console.log('JWT Verify - Token verified successfully');
+    return decoded;
   } catch (error) {
+    console.error('JWT Verify - Token verification failed:', error.message);
     return null;
   }
 };

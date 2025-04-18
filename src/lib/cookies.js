@@ -20,8 +20,10 @@ const COOKIE_OPTIONS = {
  * @param {Object} user - User data (will be stringified)
  */
 export const setAuthCookies = (token, user) => {
+  console.log('Cookies - Setting auth cookies');
   Cookies.set(TOKEN_COOKIE, token, COOKIE_OPTIONS);
   Cookies.set(USER_COOKIE, JSON.stringify(user), COOKIE_OPTIONS);
+  console.log('Cookies - Auth cookies set successfully');
 };
 
 /**
@@ -29,7 +31,9 @@ export const setAuthCookies = (token, user) => {
  * @returns {string|null} The token or null if not found
  */
 export const getAuthToken = () => {
-  return Cookies.get(TOKEN_COOKIE) || null;
+  const token = Cookies.get(TOKEN_COOKIE) || null;
+  console.log('Cookies - Getting auth token:', token ? 'Found' : 'Not found');
+  return token;
 };
 
 /**
@@ -38,12 +42,16 @@ export const getAuthToken = () => {
  */
 export const getUserFromCookies = () => {
   const userCookie = Cookies.get(USER_COOKIE);
+  console.log('Cookies - Getting user from cookies:', userCookie ? 'Found' : 'Not found');
+
   if (!userCookie) return null;
-  
+
   try {
-    return JSON.parse(userCookie);
+    const user = JSON.parse(userCookie);
+    console.log('Cookies - User parsed successfully');
+    return user;
   } catch (error) {
-    console.error('Error parsing user cookie:', error);
+    console.error('Cookies - Error parsing user cookie:', error);
     return null;
   }
 };

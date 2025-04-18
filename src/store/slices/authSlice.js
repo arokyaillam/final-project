@@ -57,21 +57,37 @@ export const checkAuth = createAsyncThunk(
   'auth/check',
   async (_, { rejectWithValue }) => {
     try {
+      console.log('Auth Slice - Checking authentication from cookies');
+
       // Get user info from cookies
       const user = getUserFromCookies();
       const token = getAuthToken();
 
+      console.log('Auth Slice - Cookie check results:', {
+        userFound: !!user,
+        tokenFound: !!token
+      });
+
       if (!user || !token) {
+        console.log('Auth Slice - Missing user or token in cookies');
         return rejectWithValue({ error: 'Not authenticated' });
       }
+
+      console.log('Auth Slice - Verifying token with server');
 
       // Verify token with server
       const response = await api.get('/auth/verify');
 
+      console.log('Auth Slice - Token verified successfully with server');
+
       return { user: response.data.user, token };
     } catch (error) {
+      console.error('Auth Slice - Authentication check failed:', error.message || 'Unknown error');
+
       // Clear cookies if verification fails
+      console.log('Auth Slice - Clearing auth cookies due to verification failure');
       clearAuthCookies();
+
       return rejectWithValue({ error: 'Session expired' });
     }
   }

@@ -8,8 +8,10 @@ export async function GET() {
   try {
     // Get token from cookies
     const token = cookies().get('token')?.value;
-    
+    console.log('Verify API - Token from cookies:', token ? 'Found' : 'Not found');
+
     if (!token) {
+      console.log('Verify API - No token found in cookies');
       return NextResponse.json(
         { error: 'Not authenticated' },
         { status: 401 }
@@ -18,19 +20,27 @@ export async function GET() {
 
     // Verify token
     const decoded = verifyToken(token);
+    console.log('Verify API - Token verification result:', decoded ? 'Valid' : 'Invalid');
+
     if (!decoded || !decoded.userId) {
+      console.log('Verify API - Invalid token or missing userId');
       return NextResponse.json(
         { error: 'Invalid token' },
         { status: 401 }
       );
     }
 
+    console.log('Verify API - Decoded token userId:', decoded.userId);
+
     // Connect to database
     await connectToDatabase();
 
     // Find user
     const user = await User.findById(decoded.userId);
+    console.log('Verify API - User found:', user ? 'Yes' : 'No');
+
     if (!user) {
+      console.log('Verify API - User not found for userId:', decoded.userId);
       return NextResponse.json(
         { error: 'User not found' },
         { status: 404 }

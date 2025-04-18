@@ -18,37 +18,51 @@ export default function ProtectedRoute({ children }) {
   const { isAuthenticated: isAuthenticatedState, sessionChecked } = useSelector((state) => state.auth);
 
   useEffect(() => {
+    console.log('ProtectedRoute - Auth state:', {
+      isAuthenticated: isAuthenticatedState,
+      sessionChecked,
+      hasCookies: isAuthenticated()
+    });
+
     // If not authenticated and we've checked the session, redirect to login
     if (!isAuthenticatedState && sessionChecked) {
+      console.log('ProtectedRoute - Not authenticated and session checked, redirecting to login');
       router.push('/login');
       return;
     }
 
     // If we haven't checked the session yet but there might be a cookie, check it
     if (!sessionChecked && isAuthenticated()) {
+      console.log('ProtectedRoute - Session not checked but cookies found, verifying...');
+
       // Add a timeout to prevent infinite loading
       const timeoutId = setTimeout(() => {
         // If verification takes too long, assume it failed and redirect to login
         if (!sessionChecked) {
-          console.log('Session verification timed out, redirecting to login');
+          console.log('ProtectedRoute - Session verification timed out, redirecting to login');
           router.push('/login');
         }
-      }, 3000); // 3 seconds timeout
+      }, 5000); // 5 seconds timeout (increased from 3)
 
       // Dispatch the check auth action
+      console.log('ProtectedRoute - Dispatching checkAuth action');
       dispatch(checkAuth())
         .unwrap()
         .then(() => {
+          console.log('ProtectedRoute - Auth check successful');
           clearTimeout(timeoutId);
         })
         .catch((error) => {
-          console.error('Auth check failed:', error);
+          console.error('ProtectedRoute - Auth check failed:', error);
           clearTimeout(timeoutId);
           router.push('/login');
         });
 
       // Clean up timeout on unmount
-      return () => clearTimeout(timeoutId);
+      return () => {
+        console.log('ProtectedRoute - Cleaning up timeout');
+        clearTimeout(timeoutId);
+      };
     }
   }, [dispatch, router, isAuthenticatedState, sessionChecked]);
 
