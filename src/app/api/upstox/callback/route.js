@@ -58,9 +58,10 @@ async function getAccessToken(code, credentials) {
 
 export async function GET(request) {
   try {
-    // Get authorization code from query parameters
+    // Get authorization code and userId from query parameters
     const { searchParams } = new URL(request.url);
     const code = searchParams.get('code');
+    const userId = searchParams.get('userId');
 
     if (!code) {
       return NextResponse.redirect(new URL('/dashboard?error=no_code', request.url));
@@ -73,22 +74,37 @@ export async function GET(request) {
     const authToken = request.cookies.get('token')?.value;
     console.log('Auth token found:', authToken ? 'Yes' : 'No');
 
-    if (!authToken) {
-      console.log('No auth token found, redirecting to login');
+    // Check if we have a userId in the query parameters (for direct callback handling)
+    const userId = searchParams.get('userId');
+
+    if (!authToken && !userId) {
+      console.log('No auth token or userId found, redirecting to login');
       // Store the callback code in a query parameter so we can use it after login
       return NextResponse.redirect(new URL(`/login?error=not_authenticated&callback_code=${code}`, request.url));
     }
 
-    const decoded = verifyToken(authToken);
-    if (!decoded || !decoded.userId) {
-      return NextResponse.redirect(new URL('/login?error=invalid_token', request.url));
+    // Get userId either from token or from query parameter
+    let userIdToUse;
+
+    if (authToken) {
+      const decoded = verifyToken(authToken);
+      if (!decoded || !decoded.userId) {
+        return NextResponse.redirect(new URL('/login?error=invalid_token', request.url));
+      }
+      userIdToUse = decoded.userId;
+    } else if (userId) {
+      // Use the userId from the query parameter
+      userIdToUse = userId;
+    } else {
+      // This should not happen due to the previous check, but just in case
+      return NextResponse.redirect(new URL('/login?error=no_user_id', request.url));
     }
 
     // Connect to database
     await connectToDatabase();
 
     // Find user
-    const user = await User.findById(decoded.userId);
+    const user = await User.findById(userIdToUse);
     if (!user) {
       return NextResponse.redirect(new URL('/login?error=user_not_found', request.url));
     }

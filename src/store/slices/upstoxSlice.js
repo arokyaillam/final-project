@@ -16,10 +16,15 @@ export const fetchUpstoxToken = createAsyncThunk(
 
 export const connectToUpstox = createAsyncThunk(
   'upstox/connect',
-  async (_, { rejectWithValue }) => {
+  async (userId, { rejectWithValue }) => {
     try {
       // Get authorization URL
       const response = await api.get('/upstox/auth');
+
+      // Store userId in localStorage for the callback
+      if (userId) {
+        localStorage.setItem('upstox_user_id', userId);
+      }
 
       // Open authorization URL in the same window to maintain session cookies
       window.location.href = response.data.authorizationUrl;

@@ -42,8 +42,8 @@ export default function LoginPage() {
         // Clear the stored code
         localStorage.removeItem('upstox_callback_code');
 
-        // Redirect to the callback URL with the code
-        router.push(`/api/upstox/callback?code=${storedCallbackCode}`);
+        // Redirect to the callback URL with the code and userId
+        router.push(`/api/upstox/callback?code=${storedCallbackCode}&userId=${resultAction.payload.user.id}`);
       } else {
         // Normal login flow
         router.push('/dashboard');

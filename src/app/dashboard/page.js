@@ -54,7 +54,8 @@ export default function DashboardPage() {
   };
 
   const handleConnectUpstox = async () => {
-    const result = await dispatch(connectToUpstox());
+    // Pass the user ID to the connectToUpstox function
+    const result = await dispatch(connectToUpstox(user?._id));
 
     // After connecting, fetch the token
     if (connectToUpstox.fulfilled.match(result)) {
