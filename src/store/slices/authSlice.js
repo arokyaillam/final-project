@@ -75,12 +75,31 @@ export const checkAuth = createAsyncThunk(
 
       console.log('Auth Slice - Verifying token with server');
 
-      // Verify token with server
-      const response = await api.get('/auth/verify');
+      // Verify token with server - add a timeout to prevent hanging
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000); // 4 second timeout
 
-      console.log('Auth Slice - Token verified successfully with server');
+      try {
+        // Verify token with server
+        const response = await api.get('/auth/verify', {
+          signal: controller.signal
+        });
 
-      return { user: response.data.user, token };
+        // Clear the timeout since we got a response
+        clearTimeout(timeoutId);
+
+        console.log('Auth Slice - Token verified successfully with server');
+        return { user: response.data.user, token };
+      } catch (fetchError) {
+        clearTimeout(timeoutId);
+
+        if (fetchError.name === 'AbortError') {
+          console.error('Auth Slice - Token verification request timed out');
+          return rejectWithValue({ error: 'Verification timed out' });
+        }
+
+        throw fetchError; // Re-throw to be caught by the outer catch
+      }
     } catch (error) {
       console.error('Auth Slice - Authentication check failed:', error.message || 'Unknown error');
 

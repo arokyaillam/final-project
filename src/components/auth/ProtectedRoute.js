@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import { checkAuth } from '@/store/slices/authSlice';
@@ -16,6 +16,8 @@ export default function ProtectedRoute({ children }) {
   const router = useRouter();
   const dispatch = useDispatch();
   const { isAuthenticated: isAuthenticatedState, sessionChecked } = useSelector((state) => state.auth);
+  const [isLoading, setIsLoading] = useState(true);
+  const [authCheckStarted, setAuthCheckStarted] = useState(false);
 
   useEffect(() => {
     console.log('ProtectedRoute - Auth state:', {
@@ -24,7 +26,14 @@ export default function ProtectedRoute({ children }) {
       hasCookies: isAuthenticated()
     });
 
-    // If not authenticated and we've checked the session, redirect to login
+    // If already authenticated, we're good to go
+    if (isAuthenticatedState) {
+      console.log('ProtectedRoute - Already authenticated, showing content');
+      setIsLoading(false);
+      return;
+    }
+
+    // If we've checked the session and not authenticated, redirect to login
     if (!isAuthenticatedState && sessionChecked) {
       console.log('ProtectedRoute - Not authenticated and session checked, redirecting to login');
       router.push('/login');
@@ -32,17 +41,16 @@ export default function ProtectedRoute({ children }) {
     }
 
     // If we haven't checked the session yet but there might be a cookie, check it
-    if (!sessionChecked && isAuthenticated()) {
+    if (!sessionChecked && isAuthenticated() && !authCheckStarted) {
       console.log('ProtectedRoute - Session not checked but cookies found, verifying...');
+      setAuthCheckStarted(true);
 
       // Add a timeout to prevent infinite loading
       const timeoutId = setTimeout(() => {
-        // If verification takes too long, assume it failed and redirect to login
-        if (!sessionChecked) {
-          console.log('ProtectedRoute - Session verification timed out, redirecting to login');
-          router.push('/login');
-        }
-      }, 5000); // 5 seconds timeout (increased from 3)
+        console.log('ProtectedRoute - Session verification timed out, redirecting to login');
+        setIsLoading(false);
+        router.push('/login');
+      }, 5000); // 5 seconds timeout
 
       // Dispatch the check auth action
       console.log('ProtectedRoute - Dispatching checkAuth action');
@@ -51,10 +59,12 @@ export default function ProtectedRoute({ children }) {
         .then(() => {
           console.log('ProtectedRoute - Auth check successful');
           clearTimeout(timeoutId);
+          setIsLoading(false);
         })
         .catch((error) => {
           console.error('ProtectedRoute - Auth check failed:', error);
           clearTimeout(timeoutId);
+          setIsLoading(false);
           router.push('/login');
         });
 
@@ -64,10 +74,22 @@ export default function ProtectedRoute({ children }) {
         clearTimeout(timeoutId);
       };
     }
-  }, [dispatch, router, isAuthenticatedState, sessionChecked]);
+
+    // If no cookies and session checked, redirect to login
+    if (!isAuthenticated() && sessionChecked) {
+      console.log('ProtectedRoute - No cookies and session checked, redirecting to login');
+      router.push('/login');
+      return;
+    }
+
+    // If we get here and everything is checked, we can stop loading
+    if (sessionChecked) {
+      setIsLoading(false);
+    }
+  }, [dispatch, router, isAuthenticatedState, sessionChecked, authCheckStarted]);
 
   // Show loading state while checking authentication
-  if (!sessionChecked) {
+  if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
