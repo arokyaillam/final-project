@@ -35,6 +35,7 @@ export const connectToUpstox = createAsyncThunk(
 const initialState = {
   token: null,
   isConnected: false,
+  connectedAt: null,
   loading: false,
   error: null,
 };
@@ -61,6 +62,7 @@ const upstoxSlice = createSlice({
         state.token = action.payload;
         // Set isConnected based on the response
         state.isConnected = action.payload.isConnected !== false; // If isConnected is explicitly false, use that value
+        state.connectedAt = action.payload.connectedAt || null;
       })
       .addCase(fetchUpstoxToken.rejected, (state, action) => {
         state.loading = false;

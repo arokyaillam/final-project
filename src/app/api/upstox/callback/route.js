@@ -102,42 +102,24 @@ export async function GET(request) {
       return NextResponse.redirect(new URL('/dashboard?error=token_exchange_failed', request.url));
     }
 
-    // Calculate token expiration date
-    const expiresAt = new Date();
-    expiresAt.setSeconds(expiresAt.getSeconds() + tokenData.expires_in);
+    // Instead of storing the token in the database, we'll just update the user's status
+    // to indicate they've connected to Upstox
 
-    // Save token to database
-    const upstoxTokenData = {
-      userId: user._id,
-      accessToken: tokenData.access_token,
-      refreshToken: tokenData.refresh_token,
-      tokenType: tokenData.token_type,
-      expiresIn: tokenData.expires_in,
-      expiresAt,
-    };
-
-    // Check if token already exists for user
-    let upstoxToken = await UpstoxToken.findOne({ userId: user._id });
-
-    if (upstoxToken) {
-      // Update existing token
-      Object.assign(upstoxToken, upstoxTokenData);
-      await upstoxToken.save();
-    } else {
-      // Create new token
-      upstoxToken = await UpstoxToken.create(upstoxTokenData);
-    }
-
-    // Update user with token info
-    user.upstoxToken = {
-      accessToken: tokenData.access_token,
-      refreshToken: tokenData.refresh_token,
-      expiresIn: tokenData.expires_in,
-      tokenType: tokenData.token_type,
-      expiresAt,
-    };
+    // Update user with Upstox connection status
+    user.upstoxConnected = true;
+    user.upstoxConnectedAt = new Date();
 
     await user.save();
+
+    // Store connection status in session cookie
+    const cookieStore = cookies();
+    cookieStore.set('upstox_connected', 'true', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 30 * 24 * 60 * 60, // 30 days
+      path: '/',
+      sameSite: 'strict',
+    });
 
     // Redirect to dashboard with success message
     return NextResponse.redirect(new URL('/dashboard?success=upstox_connected', request.url));

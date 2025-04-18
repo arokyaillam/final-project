@@ -96,7 +96,7 @@ export default function DashboardPage() {
                           Connected to Upstox
                         </p>
                         <p className="mt-2 text-sm text-green-700">
-                          Token expires at: {token?.expiresAt ? new Date(token.expiresAt).toLocaleString() : 'Unknown'}
+                          Connected since: {token?.connectedAt ? new Date(token.connectedAt).toLocaleString() : 'Unknown'}
                         </p>
                       </div>
                     </div>

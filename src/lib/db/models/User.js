@@ -18,19 +18,20 @@ const UserSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-  upstoxToken: {
-    accessToken: String,
-    refreshToken: String,
-    expiresIn: Number,
-    tokenType: String,
-    expiresAt: Date,
+  upstoxConnected: {
+    type: Boolean,
+    default: false
+  },
+  upstoxConnectedAt: {
+    type: Date,
+    default: null
   },
 }, { timestamps: true });
 
 // Hash password before saving
 UserSchema.pre('save', async function(next) {
   if (!this.isModified('password')) return next();
-  
+
   try {
     this.password = await hash(this.password, 10);
     next();
