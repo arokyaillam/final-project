@@ -4,7 +4,7 @@ import Cookies from 'js-cookie';
 
 // Cookie names
 export const TOKEN_COOKIE = 'token';
-export const USER_COOKIE = 'user';
+export const USER_COOKIE = 'user_info'; // Changed to match the name used in the API
 
 // Cookie options
 const COOKIE_OPTIONS = {
@@ -97,7 +97,7 @@ export const isAuthenticated = () => {
   if (typeof window === 'undefined') return false;
 
   // Direct check for token cookie
-  const token = Cookies.get('token');
+  const token = Cookies.get(TOKEN_COOKIE);
   const hasToken = !!token;
   console.log('isAuthenticated check - Token cookie:', hasToken ? 'Found' : 'Not found');
   return hasToken;

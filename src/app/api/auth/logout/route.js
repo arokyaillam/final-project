@@ -9,11 +9,12 @@ export async function POST() {
 
     // Clear the token cookie
     response.cookies.set('token', '', {
-      httpOnly: true,
+      httpOnly: false, // Changed to false to match login settings
       secure: process.env.NODE_ENV === 'production',
       expires: new Date(0), // Set expiration to the past
       path: '/',
-      sameSite: 'strict',
+      sameSite: 'lax', // Changed to lax to match login settings
+      maxAge: 0, // Explicitly set maxAge to 0
     });
 
     // Clear the user info cookie
@@ -22,8 +23,11 @@ export async function POST() {
       secure: process.env.NODE_ENV === 'production',
       expires: new Date(0), // Set expiration to the past
       path: '/',
-      sameSite: 'strict',
+      sameSite: 'lax', // Changed to lax to match login settings
+      maxAge: 0, // Explicitly set maxAge to 0
     });
+
+    console.log('Logout API - Cookies cleared successfully');
 
     return response;
   } catch (error) {

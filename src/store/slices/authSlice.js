@@ -37,16 +37,44 @@ export const logoutUser = createAsyncThunk(
   'auth/logout',
   async (_, { rejectWithValue }) => {
     try {
-      // Clear auth cookies
+      console.log('Auth Slice - Logging out user');
+
+      // Clear auth cookies on the client side
+      console.log('Auth Slice - Clearing client-side cookies');
       clearAuthCookies();
 
-      // Also clear the HTTP-only cookie by making a request to the server
-      await api.post('/auth/logout');
+      // Also clear cookies by making a request to the server
+      console.log('Auth Slice - Sending logout request to server');
+      const response = await api.post('/auth/logout');
+      console.log('Auth Slice - Server logout response:', response.data);
 
+      // Also manually clear cookies using js-cookie as a fallback
+      console.log('Auth Slice - Manually clearing cookies as fallback');
+      if (typeof window !== 'undefined') {
+        Cookies.remove('token', { path: '/' });
+        Cookies.remove('user_info', { path: '/' });
+      }
+
+      // Clear localStorage items related to auth
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('upstox_access_token');
+        localStorage.removeItem('upstox_token');
+      }
+
+      console.log('Auth Slice - Logout successful');
       return { success: true };
     } catch (error) {
+      console.error('Auth Slice - Logout error:', error);
+
       // Even if the server request fails, we still want to clear client-side cookies
       clearAuthCookies();
+
+      // Also manually clear cookies using js-cookie as a fallback
+      if (typeof window !== 'undefined') {
+        Cookies.remove('token', { path: '/' });
+        Cookies.remove('user_info', { path: '/' });
+      }
+
       return rejectWithValue({ error: 'Logout failed' });
     }
   }

@@ -61,8 +61,26 @@ const Header = () => {
 
   // Handle logout
   const handleLogout = async () => {
-    await dispatch(logoutUser());
-    router.push('/login');
+    try {
+      console.log('Header - Logging out user');
+      const result = await dispatch(logoutUser()).unwrap();
+      console.log('Header - Logout result:', result);
+
+      // Force clear cookies as a fallback
+      if (typeof window !== 'undefined') {
+        console.log('Header - Manually clearing cookies');
+        document.cookie = 'token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+        document.cookie = 'user_info=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+      }
+
+      // Redirect to login page
+      console.log('Header - Redirecting to login page');
+      router.push('/login');
+    } catch (error) {
+      console.error('Header - Logout error:', error);
+      // Still redirect to login page even if there's an error
+      router.push('/login');
+    }
   };
 
   // Close user menu when clicking outside
