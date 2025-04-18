@@ -6,7 +6,7 @@ export async function POST() {
     console.log('Logout API - Processing logout request');
 
     // Get the cookie store
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
 
     // Log current cookies for debugging
     const tokenCookie = cookieStore.get('token');
