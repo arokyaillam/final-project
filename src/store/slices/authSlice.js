@@ -116,14 +116,15 @@ export const checkAuth = createAsyncThunk(
 const token = typeof window !== 'undefined' ? getAuthToken() : null;
 const user = typeof window !== 'undefined' ? getUserFromCookies() : null;
 
-// Initial state
+// Initial state - assume authenticated if we have both token and user in cookies
+// This provides a better UX by avoiding the loading state on refresh
 const initialState = {
   user: user,
   token: token,
   isAuthenticated: !!token && !!user,
   loading: false,
   error: null,
-  sessionChecked: false,
+  sessionChecked: false, // We'll still verify with the server, but assume valid initially
 };
 
 // Auth slice
