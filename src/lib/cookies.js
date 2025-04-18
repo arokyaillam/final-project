@@ -10,9 +10,18 @@ export const USER_COOKIE = 'user';
 const COOKIE_OPTIONS = {
   path: '/',
   secure: process.env.NODE_ENV === 'production',
-  sameSite: 'strict',
+  sameSite: 'lax', // Changed to lax for better compatibility
   expires: 1 // 1 day
 };
+
+// Debug cookie access
+console.log('Cookies module loaded, checking for token cookie');
+try {
+  const token = Cookies.get('token');
+  console.log('Cookies module - Token cookie:', token ? 'Found' : 'Not found');
+} catch (error) {
+  console.error('Cookies module - Error checking token:', error);
+}
 
 /**
  * Set authentication cookies
@@ -69,5 +78,9 @@ export const clearAuthCookies = () => {
  * @returns {boolean} True if authenticated
  */
 export const isAuthenticated = () => {
-  return !!getAuthToken();
+  // Direct check for token cookie
+  const token = Cookies.get('token');
+  const hasToken = !!token;
+  console.log('isAuthenticated check - Token cookie:', hasToken ? 'Found' : 'Not found');
+  return hasToken;
 };

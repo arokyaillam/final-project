@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import { checkAuth } from '@/store/slices/authSlice';
 import { isAuthenticated, getUserFromCookies, getAuthToken } from '@/lib/cookies';
+import Cookies from 'js-cookie';
 
 /**
  * A wrapper component that protects routes requiring authentication
@@ -87,10 +88,16 @@ export default function ProtectedRoute({ children }) {
     );
   }
 
-  // If we have cookies, show content even if verification is still in progress
-  // This improves UX by showing content faster
-  if (isAuthenticated() || isAuthenticatedState) {
-    console.log('ProtectedRoute - Showing content because user is authenticated');
+  // Direct check for token cookie
+  const token = Cookies.get('token');
+  if (token) {
+    console.log('ProtectedRoute - Token cookie found, showing content');
+    return children;
+  }
+
+  // Fallback to Redux state
+  if (isAuthenticatedState) {
+    console.log('ProtectedRoute - Authenticated in Redux state, showing content');
     return children;
   }
 

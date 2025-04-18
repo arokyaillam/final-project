@@ -53,14 +53,14 @@ export async function POST(request) {
     // Set token in cookie using the response object
     // Set to expire in 24 hours (24 * 60 * 60 = 86400 seconds)
     response.cookies.set('token', token, {
-      httpOnly: true,
+      httpOnly: false, // Changed to false for direct client access
       secure: process.env.NODE_ENV === 'production',
       maxAge: 24 * 60 * 60, // 24 hours
       path: '/',
-      sameSite: 'strict',
+      sameSite: 'lax', // Changed to lax for better compatibility
     });
 
-    // Also set a non-httpOnly cookie with user info for client-side access
+    // Also set a cookie with user info for client-side access
     // This doesn't contain sensitive data, just basic user info
     response.cookies.set('user_info', JSON.stringify({
       id: user._id,
@@ -71,8 +71,11 @@ export async function POST(request) {
       secure: process.env.NODE_ENV === 'production',
       maxAge: 24 * 60 * 60, // 24 hours
       path: '/',
-      sameSite: 'strict',
+      sameSite: 'lax', // Changed to lax for better compatibility
     });
+
+    // Log cookie setting
+    console.log('Login API - Setting cookies for user:', user.email);
 
     // Return the response with the cookie
     return response;

@@ -5,7 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useDispatch, useSelector } from 'react-redux';
 import { loginUser, checkAuth } from '@/store/slices/authSlice';
-import { isAuthenticated } from '@/lib/cookies';
+import { isAuthenticated, getAuthToken } from '@/lib/cookies';
+import Cookies from 'js-cookie';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -21,10 +22,18 @@ export default function LoginPage() {
   // State to track if we're checking authentication
   const [isCheckingAuth, setIsCheckingAuth] = useState(false);
 
-  // Immediate check for authentication on component mount
+  // Force check for token on every render
   useEffect(() => {
-    console.log('Login Page - Initial auth check');
-    console.log('Login Page - Auth state:', { isAuthenticated: isAuthenticatedState, sessionChecked, hasCookies: isAuthenticated() });
+    // Direct check for token cookie
+    const token = Cookies.get('token');
+    console.log('Login Page - Direct cookie check:', { token: token ? 'Found' : 'Not found' });
+
+    // If we have a token cookie, redirect to dashboard immediately
+    if (token) {
+      console.log('Login Page - Token cookie found, redirecting to dashboard');
+      router.push('/dashboard');
+      return;
+    }
 
     // If Redux state shows authenticated, redirect immediately
     if (isAuthenticatedState) {
@@ -33,27 +42,23 @@ export default function LoginPage() {
       return;
     }
 
-    // If we have cookies, assume authenticated and redirect immediately
-    // This provides a better UX by avoiding the loading state
-    if (isAuthenticated()) {
-      console.log('Login Page - Found auth cookies, redirecting to dashboard immediately');
-      router.push('/dashboard');
+    // If we get here, we're not authenticated and should show the login form
+    console.log('Login Page - No token cookie found, showing login form');
+  }, [router, isAuthenticatedState]);
 
-      // Also trigger the check auth action in the background to update Redux state
-      // This ensures the state is properly updated for future navigation
-      if (!sessionChecked && !isCheckingAuth) {
+  // Also check on mount to update Redux state if needed
+  useEffect(() => {
+    if (!sessionChecked && !isCheckingAuth) {
+      const token = Cookies.get('token');
+      if (token) {
         setIsCheckingAuth(true);
         dispatch(checkAuth())
           .finally(() => {
             setIsCheckingAuth(false);
           });
       }
-      return;
     }
-
-    // If we get here, we're not authenticated and should show the login form
-    console.log('Login Page - Not authenticated, showing login form');
-  }, [isAuthenticatedState, isAuthenticated, router, dispatch, sessionChecked, isCheckingAuth]);
+  }, [dispatch, sessionChecked, isCheckingAuth]);
 
   useEffect(() => {
     // Store the callback code in localStorage if it exists
