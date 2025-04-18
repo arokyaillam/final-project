@@ -59,21 +59,7 @@ const Header = () => {
     }
   };
 
-  // Handle logout - navigate to the logout page
-  const handleLogout = (e) => {
-    // Prevent default behavior and stop propagation
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-
-    console.log('Header - Logout button clicked, navigating to logout page');
-
-    // Use a small timeout to ensure the event has fully propagated
-    setTimeout(() => {
-      window.location.href = '/logout';
-    }, 100);
-  };
+  // We're not using a handler function anymore, just direct links
 
   // Close user menu when clicking outside
   useEffect(() => {
@@ -202,13 +188,20 @@ const Header = () => {
                     >
                       Settings
                     </Link>
-                    <a
-                      href="/logout"
-                      onClick={handleLogout}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      Sign out
-                    </a>
+                    <div className="flex flex-col">
+                      <Link
+                        href="/logout"
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        Sign out
+                      </Link>
+                      <a
+                        href="/api/auth/logout-redirect"
+                        className="block w-full text-left px-4 py-2 text-xs text-gray-500 hover:bg-gray-100"
+                      >
+                        Sign out (alternative)
+                      </a>
+                    </div>
                   </div>
                 </div>
               )}
@@ -288,13 +281,20 @@ const Header = () => {
             </button>
 
             {/* Logout button in mobile menu */}
-            <a
-              href="/logout"
-              onClick={handleLogout}
-              className="block w-full text-left px-3 py-2 text-base font-medium text-red-600 hover:text-red-800 hover:bg-gray-50 border-l-4 border-transparent"
-            >
-              Sign out
-            </a>
+            <div className="flex flex-col">
+              <Link
+                href="/logout"
+                className="block w-full text-left px-3 py-2 text-base font-medium text-red-600 hover:text-red-800 hover:bg-gray-50 border-l-4 border-transparent"
+              >
+                Sign out
+              </Link>
+              <a
+                href="/api/auth/logout-redirect"
+                className="block w-full text-left px-3 py-2 text-sm font-medium text-red-400 hover:text-red-600 hover:bg-gray-50 border-l-4 border-transparent"
+              >
+                Sign out (alternative)
+              </a>
+            </div>
           </div>
         </div>
       )}
