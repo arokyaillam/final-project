@@ -6,8 +6,9 @@ import { verifyToken } from '@/lib/auth/jwt';
 
 export async function GET() {
   try {
-    // Get token from cookies
-    const token = cookies().get('token')?.value;
+    // Get token from cookies - await the cookies() call
+    const cookieStore = await cookies();
+    const token = cookieStore.get('token')?.value;
     console.log('Verify API - Token from cookies:', token ? 'Found' : 'Not found');
 
     if (!token) {
