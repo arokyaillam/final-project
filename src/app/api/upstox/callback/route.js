@@ -67,10 +67,8 @@ export async function GET(request) {
     }
 
     // Get user from JWT token
-    const cookieStore = cookies();
-    // Use the cookies API asynchronously
-    const tokenCookie = await cookieStore.get('token');
-    const authToken = tokenCookie?.value;
+    // In Next.js 14+, cookies() is already a promise-like object
+    const authToken = cookies().get('token')?.value;
 
     if (!authToken) {
       return NextResponse.redirect(new URL('/login?error=not_authenticated', request.url));
@@ -161,8 +159,8 @@ export async function GET(request) {
     await user.save();
 
     // Store connection status in session cookie
-    // Use the cookies API asynchronously
-    await cookieStore.set('upstox_connected', 'true', {
+    // In Next.js 14+, cookies() is already a promise-like object
+    cookies().set('upstox_connected', 'true', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       maxAge: 30 * 24 * 60 * 60, // 30 days

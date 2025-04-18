@@ -32,10 +32,8 @@ const UpstoxCredentials = mongoose.models.UpstoxCredentials ||
 export async function GET(request) {
   try {
     // Get JWT token from cookies
-    const cookieStore = cookies();
-    // Use the cookies API asynchronously
-    const tokenCookie = await cookieStore.get('token');
-    const token = tokenCookie?.value;
+    // In Next.js 14+, cookies() is already a promise-like object
+    const token = cookies().get('token')?.value;
 
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
