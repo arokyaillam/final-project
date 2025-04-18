@@ -59,15 +59,14 @@ const upstoxSlice = createSlice({
       .addCase(fetchUpstoxToken.fulfilled, (state, action) => {
         state.loading = false;
         state.token = action.payload;
-        state.isConnected = true;
+        // Set isConnected based on the response
+        state.isConnected = action.payload.isConnected !== false; // If isConnected is explicitly false, use that value
       })
       .addCase(fetchUpstoxToken.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload?.error || 'Failed to fetch Upstox token';
-        // Only set isConnected to false if it's a 404 (token not found)
-        if (action.payload?.status === 404) {
-          state.isConnected = false;
-        }
+        // Set isConnected to false on any error
+        state.isConnected = false;
       })
 
       // Connect to Upstox cases

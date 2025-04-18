@@ -78,7 +78,11 @@ export async function GET(request) {
     const upstoxToken = await UpstoxToken.findOne({ userId: decoded.userId });
 
     if (!upstoxToken) {
-      return NextResponse.json({ error: 'Upstox token not found' }, { status: 404 });
+      // Return a 200 response with isConnected: false instead of a 404 error
+      return NextResponse.json({
+        isConnected: false,
+        message: 'Upstox token not found. Please connect to Upstox first.'
+      });
     }
 
     // Check if token is expired

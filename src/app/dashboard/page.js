@@ -117,7 +117,7 @@ export default function DashboardPage() {
                     <div className="flex">
                       <div className="ml-3">
                         <p className="text-sm font-medium text-red-800">
-                          Error: {error}
+                          {error.includes('not found') ? 'Please connect to Upstox to continue.' : `Error: ${error}`}
                         </p>
                       </div>
                     </div>
