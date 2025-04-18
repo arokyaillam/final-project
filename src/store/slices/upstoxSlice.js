@@ -6,7 +6,7 @@ export const fetchUpstoxToken = createAsyncThunk(
   'upstox/fetchToken',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.get('/api/upstox/token');
+      const response = await api.get('/upstox/token');
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || { error: 'Failed to fetch Upstox token' });
@@ -19,11 +19,11 @@ export const connectToUpstox = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       // Get authorization URL
-      const response = await api.get('/api/upstox/auth');
-      
+      const response = await api.get('/upstox/auth');
+
       // Open authorization URL in new window
       window.open(response.data.authorizationUrl, '_blank');
-      
+
       return { initiated: true };
     } catch (error) {
       return rejectWithValue(error.response?.data || { error: 'Failed to connect to Upstox' });
@@ -69,7 +69,7 @@ const upstoxSlice = createSlice({
           state.isConnected = false;
         }
       })
-      
+
       // Connect to Upstox cases
       .addCase(connectToUpstox.pending, (state) => {
         state.loading = true;

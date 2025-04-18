@@ -6,11 +6,11 @@ export const loginUser = createAsyncThunk(
   'auth/login',
   async (credentials, { rejectWithValue }) => {
     try {
-      const response = await api.post('/api/auth/login', credentials);
-      
+      const response = await api.post('/auth/login', credentials);
+
       // Store token in cookie (handled by the API)
       document.cookie = `token=${response.data.token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Strict`;
-      
+
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || { error: 'Login failed' });
@@ -22,11 +22,11 @@ export const registerUser = createAsyncThunk(
   'auth/register',
   async (userData, { rejectWithValue }) => {
     try {
-      const response = await api.post('/api/auth/register', userData);
-      
+      const response = await api.post('/auth/register', userData);
+
       // Store token in cookie (handled by the API)
       document.cookie = `token=${response.data.token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Strict`;
-      
+
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || { error: 'Registration failed' });
@@ -82,7 +82,7 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = action.payload?.error || 'Login failed';
       })
-      
+
       // Register cases
       .addCase(registerUser.pending, (state) => {
         state.loading = true;
@@ -98,7 +98,7 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = action.payload?.error || 'Registration failed';
       })
-      
+
       // Logout cases
       .addCase(logoutUser.pending, (state) => {
         state.loading = true;

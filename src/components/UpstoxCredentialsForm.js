@@ -7,32 +7,32 @@ import api from '@/services/api';
 export default function UpstoxCredentialsForm({ onSuccess }) {
   const [clientId, setClientId] = useState('');
   const [clientSecret, setClientSecret] = useState('');
-  const [redirectUri, setRedirectUri] = useState('http://localhost:3000/api/upstox/callback');
+  const [redirectUri, setRedirectUri] = useState('http://localhost:3000/api/upstox/callback'); // This is correct as it's a full URL
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
-  
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!clientId || !clientSecret || !redirectUri) {
       setError('All fields are required');
       return;
     }
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
-      const response = await api.post('/api/upstox/credentials', {
+      const response = await api.post('/upstox/credentials', {
         clientId,
         clientSecret,
         redirectUri,
       });
-      
+
       setSuccess(true);
       setLoading(false);
-      
+
       if (onSuccess) {
         onSuccess(response.data);
       }
@@ -41,7 +41,7 @@ export default function UpstoxCredentialsForm({ onSuccess }) {
       setLoading(false);
     }
   };
-  
+
   return (
     <div className="bg-white shadow sm:rounded-lg mt-8">
       <div className="px-4 py-5 sm:p-6">
@@ -49,7 +49,7 @@ export default function UpstoxCredentialsForm({ onSuccess }) {
         <div className="mt-2 max-w-xl text-sm text-gray-500">
           <p>Enter your Upstox API credentials to connect your account.</p>
         </div>
-        
+
         {success ? (
           <div className="mt-4 rounded-md bg-green-50 p-4">
             <div className="flex">
@@ -79,7 +79,7 @@ export default function UpstoxCredentialsForm({ onSuccess }) {
                 />
               </div>
             </div>
-            
+
             <div className="mt-4">
               <label htmlFor="client-secret" className="block text-sm font-medium leading-6 text-gray-900">
                 Client Secret
@@ -97,7 +97,7 @@ export default function UpstoxCredentialsForm({ onSuccess }) {
                 />
               </div>
             </div>
-            
+
             <div className="mt-4">
               <label htmlFor="redirect-uri" className="block text-sm font-medium leading-6 text-gray-900">
                 Redirect URI
@@ -115,7 +115,7 @@ export default function UpstoxCredentialsForm({ onSuccess }) {
                 />
               </div>
             </div>
-            
+
             {error && (
               <div className="mt-4 rounded-md bg-red-50 p-4">
                 <div className="flex">
@@ -127,7 +127,7 @@ export default function UpstoxCredentialsForm({ onSuccess }) {
                 </div>
               </div>
             )}
-            
+
             <div className="mt-5">
               <button
                 type="submit"

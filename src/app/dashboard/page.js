@@ -21,7 +21,7 @@ export default function DashboardPage() {
     const checkCredentials = async () => {
       try {
         setCredentialsLoading(true);
-        const response = await api.get('/api/upstox/credentials');
+        const response = await api.get('/upstox/credentials');
         setHasCredentials(response.data.hasCredentials);
         setCredentialsLoading(false);
 
