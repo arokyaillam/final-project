@@ -59,10 +59,20 @@ const Header = () => {
     }
   };
 
-  // Handle logout - simply navigate to the logout page
-  const handleLogout = () => {
-    console.log('Header - Navigating to logout page');
-    window.location.href = '/logout';
+  // Handle logout - navigate to the logout page
+  const handleLogout = (e) => {
+    // Prevent default behavior and stop propagation
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    console.log('Header - Logout button clicked, navigating to logout page');
+
+    // Use a small timeout to ensure the event has fully propagated
+    setTimeout(() => {
+      window.location.href = '/logout';
+    }, 100);
   };
 
   // Close user menu when clicking outside
@@ -192,12 +202,13 @@ const Header = () => {
                     >
                       Settings
                     </Link>
-                    <button
+                    <a
+                      href="/logout"
                       onClick={handleLogout}
                       className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     >
                       Sign out
-                    </button>
+                    </a>
                   </div>
                 </div>
               )}
@@ -275,6 +286,15 @@ const Header = () => {
             >
               Option Data
             </button>
+
+            {/* Logout button in mobile menu */}
+            <a
+              href="/logout"
+              onClick={handleLogout}
+              className="block w-full text-left px-3 py-2 text-base font-medium text-red-600 hover:text-red-800 hover:bg-gray-50 border-l-4 border-transparent"
+            >
+              Sign out
+            </a>
           </div>
         </div>
       )}
