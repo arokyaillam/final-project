@@ -37,19 +37,8 @@ export async function POST(request) {
     // Generate JWT token
     const token = signToken({ userId: newUser._id });
 
-    // Set token in cookie
-    // In Next.js 14+, we need to use the cookies API differently
-    const cookiesList = cookies();
-    cookiesList.set('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 7 * 24 * 60 * 60, // 7 days
-      path: '/',
-      sameSite: 'strict',
-    });
-
-    // Return success response
-    return NextResponse.json({
+    // Create response with token
+    const response = NextResponse.json({
       message: 'User registered successfully',
       user: {
         id: newUser._id,
@@ -57,6 +46,18 @@ export async function POST(request) {
       },
       token,
     });
+
+    // Set token in cookie using the response object
+    response.cookies.set('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 7 * 24 * 60 * 60, // 7 days
+      path: '/',
+      sameSite: 'strict',
+    });
+
+    // Return the response with the cookie
+    return response;
   } catch (error) {
     console.error('Registration error:', error);
     return NextResponse.json(

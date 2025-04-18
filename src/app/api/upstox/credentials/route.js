@@ -49,8 +49,8 @@ export async function POST(request) {
   try {
     // Get user from JWT token
     // In Next.js 14+, we need to use the cookies API differently
-    const cookiesList = cookies();
-    const authToken = cookiesList.get('token')?.value;
+    // We'll use a workaround to avoid the warning
+    const authToken = request.cookies.get('token')?.value;
 
     if (!authToken) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -120,8 +120,8 @@ export async function GET(request) {
   try {
     // Get user from JWT token
     // In Next.js 14+, we need to use the cookies API differently
-    const cookiesList = cookies();
-    const authToken = cookiesList.get('token')?.value;
+    // We'll use a workaround to avoid the warning
+    const authToken = request.cookies.get('token')?.value;
 
     if (!authToken) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

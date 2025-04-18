@@ -68,8 +68,8 @@ export async function GET(request) {
 
     // Get user from JWT token
     // In Next.js 14+, we need to use the cookies API differently
-    const cookiesList = cookies();
-    const authToken = cookiesList.get('token')?.value;
+    // We'll use a workaround to avoid the warning
+    const authToken = request.cookies.get('token')?.value;
 
     if (!authToken) {
       return NextResponse.redirect(new URL('/login?error=not_authenticated', request.url));
@@ -161,8 +161,10 @@ export async function GET(request) {
 
     // Store connection status in session cookie
     // In Next.js 14+, we need to use the cookies API differently
-    const cookiesList = cookies();
-    cookiesList.set('upstox_connected', 'true', {
+    // We'll use a workaround to avoid the warning
+    // For setting cookies, we'll use the response object
+    const response = NextResponse.redirect(new URL('/dashboard?success=upstox_connected', request.url));
+    response.cookies.set('upstox_connected', 'true', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       maxAge: 30 * 24 * 60 * 60, // 30 days
@@ -170,8 +172,8 @@ export async function GET(request) {
       sameSite: 'strict',
     });
 
-    // Redirect to dashboard with success message
-    return NextResponse.redirect(new URL('/dashboard?success=upstox_connected', request.url));
+    // Return the response with the cookie
+    return response;
   } catch (error) {
     console.error('Upstox callback error:', error);
     return NextResponse.redirect(new URL(`/dashboard?error=${encodeURIComponent(error.message || 'unknown_error')}`, request.url));
