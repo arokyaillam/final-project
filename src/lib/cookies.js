@@ -14,13 +14,16 @@ const COOKIE_OPTIONS = {
   expires: 1 // 1 day
 };
 
-// Debug cookie access
-console.log('Cookies module loaded, checking for token cookie');
-try {
-  const token = Cookies.get('token');
-  console.log('Cookies module - Token cookie:', token ? 'Found' : 'Not found');
-} catch (error) {
-  console.error('Cookies module - Error checking token:', error);
+// Only run debug code on the client side
+if (typeof window !== 'undefined') {
+  // Debug cookie access
+  console.log('Cookies module loaded, checking for token cookie');
+  try {
+    const token = Cookies.get('token');
+    console.log('Cookies module - Token cookie:', token ? 'Found' : 'Not found');
+  } catch (error) {
+    console.error('Cookies module - Error checking token:', error);
+  }
 }
 
 /**
@@ -29,6 +32,9 @@ try {
  * @param {Object} user - User data (will be stringified)
  */
 export const setAuthCookies = (token, user) => {
+  // Only run on client side
+  if (typeof window === 'undefined') return;
+
   console.log('Cookies - Setting auth cookies');
   Cookies.set(TOKEN_COOKIE, token, COOKIE_OPTIONS);
   Cookies.set(USER_COOKIE, JSON.stringify(user), COOKIE_OPTIONS);
@@ -40,6 +46,9 @@ export const setAuthCookies = (token, user) => {
  * @returns {string|null} The token or null if not found
  */
 export const getAuthToken = () => {
+  // Only run on client side
+  if (typeof window === 'undefined') return null;
+
   const token = Cookies.get(TOKEN_COOKIE) || null;
   console.log('Cookies - Getting auth token:', token ? 'Found' : 'Not found');
   return token;
@@ -50,6 +59,9 @@ export const getAuthToken = () => {
  * @returns {Object|null} The user data or null if not found
  */
 export const getUserFromCookies = () => {
+  // Only run on client side
+  if (typeof window === 'undefined') return null;
+
   const userCookie = Cookies.get(USER_COOKIE);
   console.log('Cookies - Getting user from cookies:', userCookie ? 'Found' : 'Not found');
 
@@ -69,6 +81,9 @@ export const getUserFromCookies = () => {
  * Clear authentication cookies
  */
 export const clearAuthCookies = () => {
+  // Only run on client side
+  if (typeof window === 'undefined') return;
+
   Cookies.remove(TOKEN_COOKIE, { path: '/' });
   Cookies.remove(USER_COOKIE, { path: '/' });
 };
@@ -78,6 +93,9 @@ export const clearAuthCookies = () => {
  * @returns {boolean} True if authenticated
  */
 export const isAuthenticated = () => {
+  // Only run on client side
+  if (typeof window === 'undefined') return false;
+
   // Direct check for token cookie
   const token = Cookies.get('token');
   const hasToken = !!token;

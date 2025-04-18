@@ -22,29 +22,33 @@ export default function LoginPage() {
   // State to track if we're checking authentication
   const [isCheckingAuth, setIsCheckingAuth] = useState(false);
 
-  // Force check for token on every render
+  // Use client-side only state to track if we're in the browser
+  const [isBrowser, setIsBrowser] = useState(false);
+
+  // Set isBrowser to true once component mounts (client-side only)
   useEffect(() => {
-    // Direct check for token cookie
-    const token = Cookies.get('token');
-    console.log('Login Page - Direct cookie check:', { token: token ? 'Found' : 'Not found' });
+    setIsBrowser(true);
+  }, []);
 
-    // If we have a token cookie, redirect to dashboard immediately
-    if (token) {
-      console.log('Login Page - Token cookie found, redirecting to dashboard');
-      router.push('/dashboard');
-      return;
-    }
+  // Force check for token on every render, but only on client-side
+  useEffect(() => {
+    // Skip on server-side rendering
+    if (!isBrowser) return;
 
-    // If Redux state shows authenticated, redirect immediately
-    if (isAuthenticatedState) {
-      console.log('Login Page - Already authenticated in Redux state, redirecting to dashboard');
+    // Check if authenticated via cookies
+    const isAuth = isAuthenticated();
+    console.log('Login Page - Auth check:', { isAuth, isAuthenticatedState });
+
+    // If we have a token cookie or Redux state shows authenticated, redirect to dashboard
+    if (isAuth || isAuthenticatedState) {
+      console.log('Login Page - Already authenticated, redirecting to dashboard');
       router.push('/dashboard');
       return;
     }
 
     // If we get here, we're not authenticated and should show the login form
-    console.log('Login Page - No token cookie found, showing login form');
-  }, [router, isAuthenticatedState]);
+    console.log('Login Page - Not authenticated, showing login form');
+  }, [router, isAuthenticatedState, isBrowser]);
 
   // Also check on mount to update Redux state if needed
   useEffect(() => {

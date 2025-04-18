@@ -15,10 +15,24 @@ export default function Home() {
   // State to track if we're checking authentication
   const [isCheckingAuth, setIsCheckingAuth] = useState(false);
 
-  // Immediate check for authentication on component mount
+  // Use client-side only state to track if we're in the browser
+  const [isBrowser, setIsBrowser] = useState(false);
+
+  // Set isBrowser to true once component mounts (client-side only)
   useEffect(() => {
-    console.log('Home Page - Initial auth check');
-    console.log('Home Page - Auth state:', { isAuthenticated: isAuthenticatedState, sessionChecked, hasCookies: isAuthenticated() });
+    setIsBrowser(true);
+  }, []);
+
+  // Authentication check effect - only runs on client-side
+  useEffect(() => {
+    // Skip on server-side rendering
+    if (!isBrowser) return;
+
+    console.log('Home Page - Auth check:', {
+      isAuthenticatedState,
+      sessionChecked,
+      hasCookies: isAuthenticated()
+    });
 
     // If Redux state shows authenticated, redirect immediately
     if (isAuthenticatedState) {
@@ -28,13 +42,11 @@ export default function Home() {
     }
 
     // If we have cookies, assume authenticated and redirect immediately
-    // This provides a better UX by avoiding the loading state
     if (isAuthenticated()) {
       console.log('Home Page - Found auth cookies, redirecting to dashboard immediately');
       router.push('/dashboard');
 
       // Also trigger the check auth action in the background to update Redux state
-      // This ensures the state is properly updated for future navigation
       if (!sessionChecked && !isCheckingAuth) {
         setIsCheckingAuth(true);
         dispatch(checkAuth())
@@ -47,7 +59,7 @@ export default function Home() {
 
     // If we get here, we're not authenticated and should show the home page
     console.log('Home Page - Not authenticated, showing home page');
-  }, [isAuthenticatedState, isAuthenticated, router, dispatch, sessionChecked, isCheckingAuth]);
+  }, [isAuthenticatedState, router, dispatch, sessionChecked, isCheckingAuth, isBrowser]);
 
   return (
     <div className="flex items-center justify-center min-h-screen">

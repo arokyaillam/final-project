@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import { checkAuth } from '@/store/slices/authSlice';
 import { isAuthenticated, getUserFromCookies, getAuthToken } from '@/lib/cookies';
-import Cookies from 'js-cookie';
 
 /**
  * A wrapper component that protects routes requiring authentication
@@ -20,8 +19,19 @@ export default function ProtectedRoute({ children }) {
   const [isLoading, setIsLoading] = useState(false); // Start with false to avoid flash
   const [authCheckComplete, setAuthCheckComplete] = useState(false);
 
-  // First check - fast path using local cookies
+  // Use client-side only state to track if we're in the browser
+  const [isBrowser, setIsBrowser] = useState(false);
+
+  // Set isBrowser to true once component mounts (client-side only)
   useEffect(() => {
+    setIsBrowser(true);
+  }, []);
+
+  // Authentication check effect
+  useEffect(() => {
+    // Skip on server-side rendering
+    if (!isBrowser) return;
+
     // If already authenticated in Redux state, we're good
     if (isAuthenticatedState) {
       console.log('ProtectedRoute - Already authenticated in Redux state');
@@ -36,10 +46,9 @@ export default function ProtectedRoute({ children }) {
     }
 
     // Quick check for cookies before doing a full verification
-    const hasToken = !!getAuthToken();
-    const hasUser = !!getUserFromCookies();
+    const hasToken = isAuthenticated();
 
-    if (!hasToken || !hasUser) {
+    if (!hasToken) {
       console.log('ProtectedRoute - No valid cookies found, redirecting');
       router.push('/login');
       return;
@@ -74,7 +83,7 @@ export default function ProtectedRoute({ children }) {
 
       return () => clearTimeout(timeoutId);
     }
-  }, [dispatch, router, isAuthenticatedState, sessionChecked, authCheckComplete]);
+  }, [dispatch, router, isAuthenticatedState, sessionChecked, authCheckComplete, isBrowser]);
 
   // Show loading state only briefly
   if (isLoading) {
@@ -88,16 +97,15 @@ export default function ProtectedRoute({ children }) {
     );
   }
 
-  // Direct check for token cookie
-  const token = Cookies.get('token');
-  if (token) {
-    console.log('ProtectedRoute - Token cookie found, showing content');
+  // If we're in the browser and authenticated (either by Redux state or cookies)
+  if (isBrowser && (isAuthenticatedState || isAuthenticated())) {
+    console.log('ProtectedRoute - Authenticated, showing content');
     return children;
   }
 
-  // Fallback to Redux state
-  if (isAuthenticatedState) {
-    console.log('ProtectedRoute - Authenticated in Redux state, showing content');
+  // On the server, always render content and let client-side handle auth
+  // This prevents hydration errors
+  if (!isBrowser) {
     return children;
   }
 

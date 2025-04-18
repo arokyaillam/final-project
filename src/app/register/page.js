@@ -19,10 +19,24 @@ export default function RegisterPage() {
   // State to track if we're checking authentication
   const [isCheckingAuth, setIsCheckingAuth] = useState(false);
 
-  // Immediate check for authentication on component mount
+  // Use client-side only state to track if we're in the browser
+  const [isBrowser, setIsBrowser] = useState(false);
+
+  // Set isBrowser to true once component mounts (client-side only)
   useEffect(() => {
-    console.log('Register Page - Initial auth check');
-    console.log('Register Page - Auth state:', { isAuthenticated: isAuthenticatedState, sessionChecked, hasCookies: isAuthenticated() });
+    setIsBrowser(true);
+  }, []);
+
+  // Authentication check effect - only runs on client-side
+  useEffect(() => {
+    // Skip on server-side rendering
+    if (!isBrowser) return;
+
+    console.log('Register Page - Auth check:', {
+      isAuthenticatedState,
+      sessionChecked,
+      hasCookies: isAuthenticated()
+    });
 
     // If Redux state shows authenticated, redirect immediately
     if (isAuthenticatedState) {
@@ -32,13 +46,11 @@ export default function RegisterPage() {
     }
 
     // If we have cookies, assume authenticated and redirect immediately
-    // This provides a better UX by avoiding the loading state
     if (isAuthenticated()) {
       console.log('Register Page - Found auth cookies, redirecting to dashboard immediately');
       router.push('/dashboard');
 
       // Also trigger the check auth action in the background to update Redux state
-      // This ensures the state is properly updated for future navigation
       if (!sessionChecked && !isCheckingAuth) {
         setIsCheckingAuth(true);
         dispatch(checkAuth())
@@ -51,7 +63,7 @@ export default function RegisterPage() {
 
     // If we get here, we're not authenticated and should show the register form
     console.log('Register Page - Not authenticated, showing register form');
-  }, [isAuthenticatedState, isAuthenticated, router, dispatch, sessionChecked, isCheckingAuth]);
+  }, [isAuthenticatedState, router, dispatch, sessionChecked, isCheckingAuth, isBrowser]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
