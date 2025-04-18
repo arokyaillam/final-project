@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import connectToDatabase from '@/lib/db/mongodb';
 import User from '@/lib/db/models/User';
+import UpstoxToken from '@/lib/db/models/UpstoxToken';
 import { verifyToken } from '@/lib/auth/jwt';
 import axios from 'axios';
 import mongoose from 'mongoose';
@@ -125,8 +126,33 @@ export async function GET(request) {
       return NextResponse.redirect(new URL(`/dashboard?error=token_exchange_failed&message=${encodeURIComponent(error.message || 'unknown_error')}`, request.url));
     }
 
-    // Instead of storing the token in the database, we'll just update the user's status
-    // to indicate they've connected to Upstox
+    // Store the token in the database AND update the user's connection status
+
+    // Calculate token expiration date
+    const expiresAt = new Date();
+    expiresAt.setSeconds(expiresAt.getSeconds() + tokenData.expires_in);
+
+    // Save token to database
+    const upstoxTokenData = {
+      userId: user._id,
+      accessToken: tokenData.access_token,
+      refreshToken: tokenData.refresh_token,
+      tokenType: tokenData.token_type,
+      expiresIn: tokenData.expires_in,
+      expiresAt,
+    };
+
+    // Check if token already exists for user
+    let upstoxToken = await UpstoxToken.findOne({ userId: user._id });
+
+    if (upstoxToken) {
+      // Update existing token
+      Object.assign(upstoxToken, upstoxTokenData);
+      await upstoxToken.save();
+    } else {
+      // Create new token
+      upstoxToken = await UpstoxToken.create(upstoxTokenData);
+    }
 
     // Update user with Upstox connection status
     user.upstoxConnected = true;

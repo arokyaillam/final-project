@@ -36,6 +36,10 @@ const initialState = {
   token: null,
   isConnected: false,
   connectedAt: null,
+  accessToken: null,
+  tokenType: null,
+  expiresIn: null,
+  expiresAt: null,
   loading: false,
   error: null,
 };
@@ -63,6 +67,10 @@ const upstoxSlice = createSlice({
         // Set isConnected based on the response
         state.isConnected = action.payload.isConnected !== false; // If isConnected is explicitly false, use that value
         state.connectedAt = action.payload.connectedAt || null;
+        state.accessToken = action.payload.accessToken || null;
+        state.tokenType = action.payload.tokenType || null;
+        state.expiresIn = action.payload.expiresIn || null;
+        state.expiresAt = action.payload.expiresAt || null;
       })
       .addCase(fetchUpstoxToken.rejected, (state, action) => {
         state.loading = false;

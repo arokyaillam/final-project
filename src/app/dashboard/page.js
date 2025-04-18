@@ -27,7 +27,13 @@ export default function DashboardPage() {
 
         // If user has credentials, fetch Upstox token
         if (response.data.hasCredentials) {
-          dispatch(fetchUpstoxToken());
+          const result = await dispatch(fetchUpstoxToken());
+
+          // If token fetch was successful and we have an access token, store it in localStorage
+          if (fetchUpstoxToken.fulfilled.match(result) && result.payload.accessToken) {
+            localStorage.setItem('upstox_access_token', result.payload.accessToken);
+            localStorage.setItem('upstox_token', result.payload.token || '');
+          }
         }
       } catch (error) {
         console.error('Failed to check credentials:', error);
@@ -39,12 +45,27 @@ export default function DashboardPage() {
   }, [dispatch]);
 
   const handleLogout = async () => {
+    // Clear Upstox tokens from localStorage
+    localStorage.removeItem('upstox_access_token');
+    localStorage.removeItem('upstox_token');
+
     await dispatch(logoutUser());
     router.push('/login');
   };
 
-  const handleConnectUpstox = () => {
-    dispatch(connectToUpstox());
+  const handleConnectUpstox = async () => {
+    const result = await dispatch(connectToUpstox());
+
+    // After connecting, fetch the token
+    if (connectToUpstox.fulfilled.match(result)) {
+      const tokenResult = await dispatch(fetchUpstoxToken());
+
+      // If token fetch was successful and we have an access token, store it in localStorage
+      if (fetchUpstoxToken.fulfilled.match(tokenResult) && tokenResult.payload.accessToken) {
+        localStorage.setItem('upstox_access_token', tokenResult.payload.accessToken);
+        localStorage.setItem('upstox_token', tokenResult.payload.token || '');
+      }
+    }
   };
 
   return (
@@ -97,6 +118,9 @@ export default function DashboardPage() {
                         </p>
                         <p className="mt-2 text-sm text-green-700">
                           Connected since: {token?.connectedAt ? new Date(token.connectedAt).toLocaleString() : 'Unknown'}
+                        </p>
+                        <p className="mt-2 text-sm text-green-700">
+                          Token expires at: {token?.expiresAt ? new Date(token.expiresAt).toLocaleString() : 'Unknown'}
                         </p>
                       </div>
                     </div>

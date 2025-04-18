@@ -76,15 +76,10 @@ export async function GET(request) {
     // Connect to database
     await connectToDatabase();
 
-    // Find user to check if they're connected to Upstox
-    const user = await User.findById(decoded.userId);
+    // Find user's Upstox token
+    const upstoxToken = await UpstoxToken.findOne({ userId: decoded.userId });
 
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
-
-    // Check if user is connected to Upstox
-    if (!user.upstoxConnected) {
+    if (!upstoxToken) {
       // Return a 200 response with isConnected: false
       return NextResponse.json({
         isConnected: false,
@@ -98,12 +93,69 @@ export async function GET(request) {
       return NextResponse.json({ error: 'Upstox credentials not found' }, { status: 404 });
     }
 
-    // Since we don't store tokens, we'll just return a success response
-    // indicating that the user is connected to Upstox
+    // Check if token is expired
+    const now = new Date();
+    const isExpired = now >= upstoxToken.expiresAt;
+
+    // If token is expired, refresh it
+    if (isExpired) {
+      try {
+        // Use the config format for refreshing token
+        const config = {
+          method: 'post',
+          maxBodyLength: Infinity,
+          url: 'https://api.upstox.com/v2/login/authorization/token',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'application/json'
+          },
+          data: new URLSearchParams({
+            'refresh_token': upstoxToken.refreshToken,
+            'client_id': credentials.clientId,
+            'client_secret': credentials.clientSecret,
+            'grant_type': 'refresh_token'
+          }).toString()
+        };
+
+        const response = await axios(config);
+        const refreshedToken = response.data;
+
+        // Calculate new expiration date
+        const expiresAt = new Date();
+        expiresAt.setSeconds(expiresAt.getSeconds() + refreshedToken.expires_in);
+
+        // Update token in database
+        upstoxToken.accessToken = refreshedToken.access_token;
+        upstoxToken.refreshToken = refreshedToken.refresh_token;
+        upstoxToken.expiresIn = refreshedToken.expires_in;
+        upstoxToken.expiresAt = expiresAt;
+        upstoxToken.updatedAt = now;
+
+        await upstoxToken.save();
+
+        // Return refreshed token
+        return NextResponse.json({
+          isConnected: true,
+          accessToken: refreshedToken.access_token,
+          tokenType: refreshedToken.token_type,
+          expiresIn: refreshedToken.expires_in,
+          expiresAt: expiresAt.toISOString(),
+          connectedAt: upstoxToken.createdAt,
+        });
+      } catch (error) {
+        console.error('Token refresh error:', error);
+        return NextResponse.json({ error: 'Failed to refresh token' }, { status: 500 });
+      }
+    }
+
+    // Return current token
     return NextResponse.json({
       isConnected: true,
-      connectedAt: user.upstoxConnectedAt,
-      message: 'Connected to Upstox',
+      accessToken: upstoxToken.accessToken,
+      tokenType: upstoxToken.tokenType,
+      expiresIn: upstoxToken.expiresIn,
+      expiresAt: upstoxToken.expiresAt.toISOString(),
+      connectedAt: upstoxToken.createdAt,
     });
   } catch (error) {
     console.error('Get Upstox token error:', error);
