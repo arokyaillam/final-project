@@ -96,6 +96,7 @@ export async function GET(request) {
     }
 
     // Exchange code for access token using the config format
+    let tokenData;
     try {
       const config = {
         method: 'post',
@@ -115,7 +116,7 @@ export async function GET(request) {
       };
 
       const response = await axios(config);
-      const tokenData = response.data;
+      tokenData = response.data;
 
       if (!tokenData || !tokenData.access_token) {
         return NextResponse.redirect(new URL('/dashboard?error=token_exchange_failed', request.url));
@@ -126,6 +127,7 @@ export async function GET(request) {
     }
 
     // Store the token in the database AND update the user's connection status
+    console.log('Token data received:', tokenData); // Debug log
 
     // Calculate token expiration date
     const expiresAt = new Date();
@@ -141,16 +143,28 @@ export async function GET(request) {
       expiresAt,
     };
 
+    console.log('Preparing to save token data:', upstoxTokenData); // Debug log
+
     // Check if token already exists for user
     let upstoxToken = await UpstoxToken.findOne({ userId: user._id });
+    console.log('Existing token found:', upstoxToken ? 'Yes' : 'No'); // Debug log
 
-    if (upstoxToken) {
-      // Update existing token
-      Object.assign(upstoxToken, upstoxTokenData);
-      await upstoxToken.save();
-    } else {
-      // Create new token
-      upstoxToken = await UpstoxToken.create(upstoxTokenData);
+    try {
+      if (upstoxToken) {
+        // Update existing token
+        console.log('Updating existing token');
+        Object.assign(upstoxToken, upstoxTokenData);
+        await upstoxToken.save();
+        console.log('Token updated successfully');
+      } else {
+        // Create new token
+        console.log('Creating new token');
+        upstoxToken = await UpstoxToken.create(upstoxTokenData);
+        console.log('Token created successfully:', upstoxToken._id);
+      }
+    } catch (error) {
+      console.error('Error saving token to database:', error);
+      // Continue execution even if token save fails
     }
 
     // Update user with Upstox connection status
