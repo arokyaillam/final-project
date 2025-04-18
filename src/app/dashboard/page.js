@@ -3,9 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
-import { logoutUser } from '@/store/slices/authSlice';
 import { fetchUpstoxToken, connectToUpstox } from '@/store/slices/upstoxSlice';
 import UpstoxCredentialsForm from '@/components/UpstoxCredentialsForm';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import api from '@/services/api';
 
 export default function DashboardPage() {
@@ -44,14 +44,7 @@ export default function DashboardPage() {
     checkCredentials();
   }, [dispatch]);
 
-  const handleLogout = async () => {
-    // Clear Upstox tokens from localStorage
-    localStorage.removeItem('upstox_access_token');
-    localStorage.removeItem('upstox_token');
 
-    await dispatch(logoutUser());
-    router.push('/login');
-  };
 
   const handleConnectUpstox = async () => {
     // Pass the user ID to the connectToUpstox function
@@ -70,19 +63,8 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow">
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 flex justify-between items-center">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Dashboard</h1>
-          <button
-            onClick={handleLogout}
-            className="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500"
-          >
-            Logout
-          </button>
-        </div>
-      </header>
-      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+    <DashboardLayout>
+      <div className="space-y-6">
         <div className="bg-white shadow sm:rounded-lg">
           <div className="px-4 py-5 sm:p-6">
             <h3 className="text-base font-semibold leading-6 text-gray-900">User Information</h3>
@@ -152,7 +134,7 @@ export default function DashboardPage() {
             </div>
           </div>
         )}
-      </main>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }

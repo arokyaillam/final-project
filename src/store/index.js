@@ -5,6 +5,7 @@ import { setupListeners } from '@reduxjs/toolkit/query';
 import counterReducer from './slices/counterSlice';
 import authReducer from './slices/authSlice';
 import upstoxReducer from './slices/upstoxSlice';
+import navigationReducer from './slices/navigationSlice';
 
 export const store = configureStore({
   reducer: {
@@ -12,6 +13,7 @@ export const store = configureStore({
     counter: counterReducer,
     auth: authReducer,
     upstox: upstoxReducer,
+    navigation: navigationReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
