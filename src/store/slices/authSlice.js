@@ -205,6 +205,9 @@ const authSlice = createSlice({
         state.user = action.payload.user;
         state.token = action.payload.token;
         state.sessionChecked = true;
+
+        // Log the user data for debugging
+        console.log('Auth Slice - User data after checkAuth:', action.payload.user);
       })
       .addCase(checkAuth.rejected, (state) => {
         state.loading = false;

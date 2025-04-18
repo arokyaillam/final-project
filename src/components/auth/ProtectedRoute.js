@@ -89,7 +89,8 @@ export default function ProtectedRoute({ children }) {
 
   // If we have cookies, show content even if verification is still in progress
   // This improves UX by showing content faster
-  if (isAuthenticated()) {
+  if (isAuthenticated() || isAuthenticatedState) {
+    console.log('ProtectedRoute - Showing content because user is authenticated');
     return children;
   }
 
