@@ -30,32 +30,52 @@ export default function DashboardPage() {
   }, [user, isAuthenticated, isBrowser]);
 
   useEffect(() => {
+    // Skip on server-side rendering
+    if (!isBrowser) return;
+
+    // Only check credentials if user is authenticated
+    if (!isAuthenticated && !user) {
+      console.log('Dashboard - Skipping credentials check, user not authenticated');
+      return;
+    }
+
     // Check if user has Upstox credentials
     const checkCredentials = async () => {
       try {
+        console.log('Dashboard - Checking Upstox credentials');
         setCredentialsLoading(true);
+
         const response = await api.get('/upstox/credentials');
+        console.log('Dashboard - Credentials response:', response.data);
+
         setHasCredentials(response.data.hasCredentials);
         setCredentialsLoading(false);
 
         // If user has credentials, fetch Upstox token
         if (response.data.hasCredentials) {
-          const result = await dispatch(fetchUpstoxToken());
+          console.log('Dashboard - User has credentials, fetching token');
+          try {
+            const result = await dispatch(fetchUpstoxToken());
 
-          // If token fetch was successful and we have an access token, store it in localStorage
-          if (fetchUpstoxToken.fulfilled.match(result) && result.payload.accessToken) {
-            localStorage.setItem('upstox_access_token', result.payload.accessToken);
-            localStorage.setItem('upstox_token', result.payload.token || '');
+            // If token fetch was successful and we have an access token, store it in localStorage
+            if (fetchUpstoxToken.fulfilled.match(result) && result.payload.accessToken) {
+              console.log('Dashboard - Token fetch successful, storing token');
+              localStorage.setItem('upstox_access_token', result.payload.accessToken);
+              localStorage.setItem('upstox_token', result.payload.token || '');
+            }
+          } catch (tokenError) {
+            console.error('Dashboard - Failed to fetch token:', tokenError);
+            // Continue even if token fetch fails
           }
         }
       } catch (error) {
-        console.error('Failed to check credentials:', error);
+        console.error('Dashboard - Failed to check credentials:', error);
         setCredentialsLoading(false);
       }
     };
 
     checkCredentials();
-  }, [dispatch]);
+  }, [dispatch, isBrowser, isAuthenticated, user]);
 
 
 
