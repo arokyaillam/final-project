@@ -59,10 +59,22 @@ export async function GET(request) {
 
     const { clientId, redirectUri } = credentials;
 
-    // Get Upstox authorization URL
-    const authorizationUrl = `https://api.upstox.com/v2/login/authorization/dialog?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code`;
+    try {
+      // Get Upstox authorization URL using the config format
+      const config = {
+        method: 'get',
+        maxBodyLength: Infinity,
+        url: `https://api.upstox.com/v2/login/authorization/dialog?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code`,
+        headers: {}
+      };
 
-    return NextResponse.json({ authorizationUrl });
+      // We don't actually make the request here, just return the URL
+      // The frontend will handle opening this URL
+      return NextResponse.json({ authorizationUrl: config.url });
+    } catch (error) {
+      console.error('Error creating authorization URL:', error);
+      return NextResponse.json({ error: 'Failed to create authorization URL' }, { status: 500 });
+    }
   } catch (error) {
     console.error('Upstox auth error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

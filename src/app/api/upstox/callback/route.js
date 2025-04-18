@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import connectToDatabase from '@/lib/db/mongodb';
 import User from '@/lib/db/models/User';
-import UpstoxToken from '@/lib/db/models/UpstoxToken';
 import { verifyToken } from '@/lib/auth/jwt';
 import axios from 'axios';
 import mongoose from 'mongoose';
@@ -96,11 +95,34 @@ export async function GET(request) {
       return NextResponse.redirect(new URL('/dashboard?error=credentials_not_found', request.url));
     }
 
-    // Exchange code for access token
-    const tokenData = await getAccessToken(code, credentials);
+    // Exchange code for access token using the config format
+    try {
+      const config = {
+        method: 'post',
+        maxBodyLength: Infinity,
+        url: 'https://api.upstox.com/v2/login/authorization/token',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json'
+        },
+        data: new URLSearchParams({
+          'code': code,
+          'client_id': credentials.clientId,
+          'client_secret': credentials.clientSecret,
+          'redirect_uri': credentials.redirectUri,
+          'grant_type': 'authorization_code'
+        }).toString()
+      };
 
-    if (!tokenData || !tokenData.access_token) {
-      return NextResponse.redirect(new URL('/dashboard?error=token_exchange_failed', request.url));
+      const response = await axios(config);
+      const tokenData = response.data;
+
+      if (!tokenData || !tokenData.access_token) {
+        return NextResponse.redirect(new URL('/dashboard?error=token_exchange_failed', request.url));
+      }
+    } catch (error) {
+      console.error('Error exchanging code for token:', error);
+      return NextResponse.redirect(new URL(`/dashboard?error=token_exchange_failed&message=${encodeURIComponent(error.message || 'unknown_error')}`, request.url));
     }
 
     // Instead of storing the token in the database, we'll just update the user's status

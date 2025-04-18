@@ -41,7 +41,7 @@ upstoxApi.interceptors.response.use(
             // Update tokens
             localStorage.setItem('upstox_access_token', response.access_token);
             localStorage.setItem('upstox_refresh_token', response.refresh_token);
-            
+
             // Retry the original request
             const originalRequest = error.config;
             originalRequest.headers.Authorization = `Bearer ${response.access_token}`;
@@ -60,30 +60,47 @@ upstoxApi.interceptors.response.use(
 );
 
 // Get authorization URL
-export const getAuthorizationUrl = () => {
-  const clientId = process.env.UPSTOX_CLIENT_ID;
-  const redirectUri = process.env.UPSTOX_REDIRECT_URI;
-  
-  return `https://api.upstox.com/v2/login/authorization/dialog?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code`;
+export const getAuthorizationUrl = async (clientId, redirectUri) => {
+  try {
+    const config = {
+      method: 'get',
+      maxBodyLength: Infinity,
+      url: 'https://api.upstox.com/v2/login/authorization/dialog',
+      headers: {}
+    };
+
+    // Add query parameters
+    config.url += `?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code`;
+
+    const response = await axios(config);
+    return response.data;
+  } catch (error) {
+    console.error('Error getting authorization URL:', error);
+    throw error;
+  }
 };
 
 // Exchange authorization code for tokens
-export const getAccessToken = async (code) => {
+export const getAccessToken = async (code, clientId, clientSecret, redirectUri) => {
   try {
-    const url = 'https://api.upstox.com/v2/login/authorization/token';
-    const headers = {
-      'accept': 'application/json',
-      'Content-Type': 'application/x-www-form-urlencoded',
+    const config = {
+      method: 'post',
+      maxBodyLength: Infinity,
+      url: 'https://api.upstox.com/v2/login/authorization/token',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json'
+      },
+      data: new URLSearchParams({
+        'code': code,
+        'client_id': clientId,
+        'client_secret': clientSecret,
+        'redirect_uri': redirectUri,
+        'grant_type': 'authorization_code'
+      }).toString()
     };
-    const data = {
-      'code': code,
-      'client_id': process.env.UPSTOX_CLIENT_ID,
-      'client_secret': process.env.UPSTOX_CLIENT_SECRET,
-      'redirect_uri': process.env.UPSTOX_REDIRECT_URI,
-      'grant_type': 'authorization_code',
-    };
-    
-    const response = await axios.post(url, new URLSearchParams(data), { headers });
+
+    const response = await axios(config);
     return response.data;
   } catch (error) {
     console.error('Error getting access token:', error.response?.data || error.message);
@@ -92,21 +109,25 @@ export const getAccessToken = async (code) => {
 };
 
 // Refresh access token
-export const refreshAccessToken = async (refreshToken) => {
+export const refreshAccessToken = async (refreshToken, clientId, clientSecret) => {
   try {
-    const url = 'https://api.upstox.com/v2/login/authorization/token';
-    const headers = {
-      'accept': 'application/json',
-      'Content-Type': 'application/x-www-form-urlencoded',
+    const config = {
+      method: 'post',
+      maxBodyLength: Infinity,
+      url: 'https://api.upstox.com/v2/login/authorization/token',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json'
+      },
+      data: new URLSearchParams({
+        'refresh_token': refreshToken,
+        'client_id': clientId,
+        'client_secret': clientSecret,
+        'grant_type': 'refresh_token'
+      }).toString()
     };
-    const data = {
-      'refresh_token': refreshToken,
-      'client_id': process.env.UPSTOX_CLIENT_ID,
-      'client_secret': process.env.UPSTOX_CLIENT_SECRET,
-      'grant_type': 'refresh_token',
-    };
-    
-    const response = await axios.post(url, new URLSearchParams(data), { headers });
+
+    const response = await axios(config);
     return response.data;
   } catch (error) {
     console.error('Error refreshing token:', error.response?.data || error.message);
