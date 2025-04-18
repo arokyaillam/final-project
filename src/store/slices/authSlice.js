@@ -39,26 +39,43 @@ export const logoutUser = createAsyncThunk(
     try {
       console.log('Auth Slice - Logging out user');
 
-      // Clear auth cookies on the client side
-      console.log('Auth Slice - Clearing client-side cookies');
+      // 1. Clear auth cookies using our utility function
+      console.log('Auth Slice - Clearing client-side cookies via utility');
       clearAuthCookies();
 
-      // Also clear cookies by making a request to the server
+      // 2. Clear cookies by making a request to the server
       console.log('Auth Slice - Sending logout request to server');
       const response = await api.post('/auth/logout');
       console.log('Auth Slice - Server logout response:', response.data);
 
-      // Also manually clear cookies using js-cookie as a fallback
-      console.log('Auth Slice - Manually clearing cookies as fallback');
+      // 3. Manually clear cookies using js-cookie as a fallback
+      console.log('Auth Slice - Manually clearing cookies via js-cookie');
       if (typeof window !== 'undefined') {
         Cookies.remove('token', { path: '/' });
         Cookies.remove('user_info', { path: '/' });
       }
 
-      // Clear localStorage items related to auth
+      // 4. Manually clear cookies using document.cookie as a second fallback
+      console.log('Auth Slice - Manually clearing cookies via document.cookie');
+      if (typeof window !== 'undefined') {
+        document.cookie = 'token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=lax;';
+        document.cookie = 'user_info=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=lax;';
+      }
+
+      // 5. Clear localStorage items related to auth
+      console.log('Auth Slice - Clearing localStorage');
       if (typeof window !== 'undefined') {
         localStorage.removeItem('upstox_access_token');
         localStorage.removeItem('upstox_token');
+        // Clear any other potential auth-related items
+        localStorage.removeItem('user');
+        localStorage.removeItem('auth');
+      }
+
+      // 6. Clear sessionStorage items as well
+      console.log('Auth Slice - Clearing sessionStorage');
+      if (typeof window !== 'undefined') {
+        sessionStorage.clear();
       }
 
       console.log('Auth Slice - Logout successful');
@@ -66,13 +83,23 @@ export const logoutUser = createAsyncThunk(
     } catch (error) {
       console.error('Auth Slice - Logout error:', error);
 
-      // Even if the server request fails, we still want to clear client-side cookies
+      // Even if the server request fails, we still want to clear client-side state
       clearAuthCookies();
 
-      // Also manually clear cookies using js-cookie as a fallback
+      // Manually clear cookies using all available methods
       if (typeof window !== 'undefined') {
+        // js-cookie
         Cookies.remove('token', { path: '/' });
         Cookies.remove('user_info', { path: '/' });
+
+        // document.cookie
+        document.cookie = 'token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=lax;';
+        document.cookie = 'user_info=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=lax;';
+
+        // Clear storage
+        localStorage.removeItem('upstox_access_token');
+        localStorage.removeItem('upstox_token');
+        sessionStorage.clear();
       }
 
       return rejectWithValue({ error: 'Logout failed' });

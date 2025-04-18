@@ -78,14 +78,35 @@ export const getUserFromCookies = () => {
 };
 
 /**
- * Clear authentication cookies
+ * Clear authentication cookies using multiple methods for redundancy
  */
 export const clearAuthCookies = () => {
   // Only run on client side
   if (typeof window === 'undefined') return;
 
+  console.log('Cookies Utility - Clearing auth cookies');
+
+  // Method 1: Using js-cookie library
   Cookies.remove(TOKEN_COOKIE, { path: '/' });
   Cookies.remove(USER_COOKIE, { path: '/' });
+
+  // Method 2: Using document.cookie directly
+  document.cookie = `${TOKEN_COOKIE}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=lax;`;
+  document.cookie = `${USER_COOKIE}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=lax;`;
+
+  // Method 3: Try with different paths
+  Cookies.remove(TOKEN_COOKIE);
+  Cookies.remove(USER_COOKIE);
+  document.cookie = `${TOKEN_COOKIE}=; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
+  document.cookie = `${USER_COOKIE}=; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
+
+  // Log the result
+  const tokenAfter = Cookies.get(TOKEN_COOKIE);
+  const userAfter = Cookies.get(USER_COOKIE);
+  console.log('Cookies Utility - After clearing:', {
+    token: tokenAfter ? 'still exists' : 'cleared',
+    user: userAfter ? 'still exists' : 'cleared'
+  });
 };
 
 /**

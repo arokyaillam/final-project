@@ -59,44 +59,10 @@ const Header = () => {
     }
   };
 
-  // Handle logout
-  const handleLogout = async () => {
-    try {
-      console.log('Header - Logging out user');
-
-      // Make a direct fetch call to the logout endpoint
-      const logoutResponse = await fetch('/api/auth/logout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      console.log('Header - Direct logout response:', await logoutResponse.json());
-
-      // Also dispatch the Redux action
-      const result = await dispatch(logoutUser()).unwrap();
-      console.log('Header - Redux logout result:', result);
-
-      // Force clear cookies as a fallback
-      if (typeof window !== 'undefined') {
-        console.log('Header - Manually clearing cookies');
-        document.cookie = 'token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=lax;';
-        document.cookie = 'user_info=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=lax;';
-
-        // Also clear localStorage
-        localStorage.removeItem('upstox_access_token');
-        localStorage.removeItem('upstox_token');
-      }
-
-      // Redirect to login page
-      console.log('Header - Redirecting to login page');
-      window.location.href = '/login'; // Use window.location for a full page refresh
-    } catch (error) {
-      console.error('Header - Logout error:', error);
-      // Still redirect to login page even if there's an error
-      window.location.href = '/login'; // Use window.location for a full page refresh
-    }
+  // Handle logout - simply navigate to the logout page
+  const handleLogout = () => {
+    console.log('Header - Navigating to logout page');
+    window.location.href = '/logout';
   };
 
   // Close user menu when clicking outside
