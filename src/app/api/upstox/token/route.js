@@ -59,7 +59,8 @@ export async function GET(request) {
   try {
     // Get JWT token from cookies
     const cookieStore = cookies();
-    const token = cookieStore.get('token')?.value;
+    const tokenCookie = cookieStore.get('token');
+    const token = tokenCookie?.value;
 
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

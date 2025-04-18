@@ -8,8 +8,7 @@ export const loginUser = createAsyncThunk(
     try {
       const response = await api.post('/auth/login', credentials);
 
-      // Store token in cookie (handled by the API)
-      document.cookie = `token=${response.data.token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Strict`;
+      // Token is stored in HTTP-only cookie by the server
 
       return response.data;
     } catch (error) {
@@ -24,8 +23,7 @@ export const registerUser = createAsyncThunk(
     try {
       const response = await api.post('/auth/register', userData);
 
-      // Store token in cookie (handled by the API)
-      document.cookie = `token=${response.data.token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Strict`;
+      // Token is stored in HTTP-only cookie by the server
 
       return response.data;
     } catch (error) {

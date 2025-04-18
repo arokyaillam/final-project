@@ -68,7 +68,8 @@ export async function GET(request) {
 
     // Get user from JWT token
     const cookieStore = cookies();
-    const authToken = cookieStore.get('token')?.value;
+    const tokenCookie = cookieStore.get('token');
+    const authToken = tokenCookie?.value;
 
     if (!authToken) {
       return NextResponse.redirect(new URL('/login?error=not_authenticated', request.url));

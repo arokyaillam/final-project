@@ -42,44 +42,45 @@ UpstoxCredentialsSchema.pre('save', function(next) {
   next();
 });
 
-const UpstoxCredentials = mongoose.models.UpstoxCredentials || 
+const UpstoxCredentials = mongoose.models.UpstoxCredentials ||
   mongoose.model('UpstoxCredentials', UpstoxCredentialsSchema);
 
 export async function POST(request) {
   try {
     // Get user from JWT token
     const cookieStore = cookies();
-    const authToken = cookieStore.get('token')?.value;
-    
+    const tokenCookie = cookieStore.get('token');
+    const authToken = tokenCookie?.value;
+
     if (!authToken) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    
+
     const decoded = verifyToken(authToken);
     if (!decoded || !decoded.userId) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
-    
+
     // Get credentials from request body
     const { clientId, clientSecret, redirectUri } = await request.json();
-    
+
     // Validate input
     if (!clientId || !clientSecret || !redirectUri) {
       return NextResponse.json({ error: 'All fields are required' }, { status: 400 });
     }
-    
+
     // Connect to database
     await connectToDatabase();
-    
+
     // Find user
     const user = await User.findById(decoded.userId);
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
-    
+
     // Save credentials to database
     let credentials = await UpstoxCredentials.findOne({ userId: user._id });
-    
+
     if (credentials) {
       // Update existing credentials
       credentials.clientId = clientId;
@@ -96,12 +97,12 @@ export async function POST(request) {
         redirectUri,
       });
     }
-    
+
     // Update environment variables (in memory only, for the current request)
     process.env.UPSTOX_CLIENT_ID = clientId;
     process.env.UPSTOX_CLIENT_SECRET = clientSecret;
     process.env.UPSTOX_REDIRECT_URI = redirectUri;
-    
+
     return NextResponse.json({
       message: 'Credentials saved successfully',
       credentials: {
@@ -119,30 +120,31 @@ export async function GET(request) {
   try {
     // Get user from JWT token
     const cookieStore = cookies();
-    const authToken = cookieStore.get('token')?.value;
-    
+    const tokenCookie = cookieStore.get('token');
+    const authToken = tokenCookie?.value;
+
     if (!authToken) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    
+
     const decoded = verifyToken(authToken);
     if (!decoded || !decoded.userId) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
-    
+
     // Connect to database
     await connectToDatabase();
-    
+
     // Find user's credentials
     const credentials = await UpstoxCredentials.findOne({ userId: decoded.userId });
-    
+
     if (!credentials) {
-      return NextResponse.json({ 
+      return NextResponse.json({
         hasCredentials: false,
-        message: 'No credentials found' 
+        message: 'No credentials found'
       });
     }
-    
+
     return NextResponse.json({
       hasCredentials: true,
       credentials: {
