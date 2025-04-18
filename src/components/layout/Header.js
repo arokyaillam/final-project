@@ -4,18 +4,18 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
-import { 
-  setActiveMainMenu, 
-  toggleSidebar, 
-  toggleMobileMenu 
+import {
+  setActiveMainMenu,
+  toggleSidebar,
+  toggleMobileMenu
 } from '@/store/slices/navigationSlice';
 import { logoutUser } from '@/store/slices/authSlice';
 import { useRouter } from 'next/navigation';
 
 // Icons
-import { 
-  Menu, X, ChevronDown, User, BarChart2, 
-  TrendingUp, Activity, PieChart, LogOut 
+import {
+  Menu, X, ChevronDown, User, BarChart2,
+  TrendingUp, Activity, PieChart, LogOut
 } from 'lucide-react';
 
 const Header = () => {
@@ -25,12 +25,18 @@ const Header = () => {
   const { activeMainMenu, mobileMenuOpen } = useSelector(state => state.navigation);
   const { user } = useSelector(state => state.auth);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [isBrowser, setIsBrowser] = useState(false);
+
+  // Set isBrowser to true once component mounts (client-side only)
+  useEffect(() => {
+    setIsBrowser(true);
+  }, []);
 
   // Handle menu item click
   const handleMenuClick = (menu) => {
     dispatch(setActiveMainMenu(menu));
     dispatch(toggleMobileMenu(false));
-    
+
     // Navigate to the appropriate page
     switch (menu) {
       case 'dashboard':
@@ -78,7 +84,7 @@ const Header = () => {
           {/* Logo and mobile menu button */}
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
-              <button 
+              <button
                 onClick={() => dispatch(toggleSidebar())}
                 className="mr-2 p-2 rounded-md text-gray-500 hover:text-gray-900 focus:outline-none"
               >
@@ -157,29 +163,30 @@ const Header = () => {
                 >
                   <span className="sr-only">Open user menu</span>
                   <div className="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center text-white">
-                    {user?.email?.charAt(0).toUpperCase() || 'U'}
+                    {/* Use a static value for server rendering, then update on client */}
+                    {!isBrowser ? 'U' : (user?.email?.charAt(0).toUpperCase() || 'U')}
                   </div>
                   <span className="ml-2 text-sm font-medium text-gray-700 hidden sm:block">
-                    {user?.email || 'User'}
+                    {!isBrowser ? 'User' : (user?.email || 'User')}
                   </span>
                   <ChevronDown className="ml-1 h-4 w-4 text-gray-500" />
                 </button>
               </div>
               {userMenuOpen && (
-                <div 
+                <div
                   className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="py-1">
-                    <Link 
-                      href="/dashboard/profile" 
+                    <Link
+                      href="/dashboard/profile"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       onClick={() => setUserMenuOpen(false)}
                     >
                       Your Profile
                     </Link>
-                    <Link 
-                      href="/dashboard/settings" 
+                    <Link
+                      href="/dashboard/settings"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       onClick={() => setUserMenuOpen(false)}
                     >

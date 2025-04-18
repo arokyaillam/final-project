@@ -13,14 +13,21 @@ export default function DashboardPage() {
   const dispatch = useDispatch();
   const { user, isAuthenticated } = useSelector((state) => state.auth);
   const { token, isConnected, loading, error } = useSelector((state) => state.upstox);
+  const [isBrowser, setIsBrowser] = useState(false);
+  const [hasCredentials, setHasCredentials] = useState(false);
+  const [credentialsLoading, setCredentialsLoading] = useState(true);
+
+  // Set isBrowser to true once component mounts (client-side only)
+  useEffect(() => {
+    setIsBrowser(true);
+  }, []);
 
   // Debug user data
   useEffect(() => {
+    if (!isBrowser) return;
     console.log('Dashboard - User data:', user);
     console.log('Dashboard - Authentication state:', isAuthenticated);
-  }, [user, isAuthenticated]);
-  const [hasCredentials, setHasCredentials] = useState(false);
-  const [credentialsLoading, setCredentialsLoading] = useState(true);
+  }, [user, isAuthenticated, isBrowser]);
 
   useEffect(() => {
     // Check if user has Upstox credentials
@@ -77,9 +84,9 @@ export default function DashboardPage() {
           <div className="px-4 py-5 sm:p-6">
             <h3 className="text-base font-semibold leading-6 text-gray-900">User Information</h3>
             <div className="mt-2 max-w-xl text-sm text-gray-500">
-              <p>Email: {user?.email || 'Loading...'}</p>
-              <p>User ID: {user?.id || user?._id || 'Loading...'}</p>
-              <p>Authentication Status: {isAuthenticated ? 'Authenticated' : 'Not Authenticated'}</p>
+              <p>Email: {!isBrowser ? 'Loading...' : (user?.email || 'Loading...')}</p>
+              <p>User ID: {!isBrowser ? 'Loading...' : (user?.id || user?._id || 'Loading...')}</p>
+              <p>Authentication Status: {!isBrowser ? 'Loading...' : (isAuthenticated ? 'Authenticated' : 'Not Authenticated')}</p>
             </div>
           </div>
         </div>
