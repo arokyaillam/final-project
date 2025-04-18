@@ -51,10 +51,25 @@ export async function POST(request) {
     });
 
     // Set token in cookie using the response object
+    // Set to expire in 24 hours (24 * 60 * 60 = 86400 seconds)
     response.cookies.set('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 7 * 24 * 60 * 60, // 7 days
+      maxAge: 24 * 60 * 60, // 24 hours
+      path: '/',
+      sameSite: 'strict',
+    });
+
+    // Also set a non-httpOnly cookie with user info for client-side access
+    // This doesn't contain sensitive data, just basic user info
+    response.cookies.set('user_info', JSON.stringify({
+      id: user._id,
+      email: user.email,
+      lastLogin: new Date().toISOString()
+    }), {
+      httpOnly: false, // Accessible from JavaScript
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 24 * 60 * 60, // 24 hours
       path: '/',
       sameSite: 'strict',
     });

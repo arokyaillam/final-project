@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useDispatch, useSelector } from 'react-redux';
-import { loginUser } from '@/store/slices/authSlice';
+import { loginUser, checkAuth } from '@/store/slices/authSlice';
+import { isAuthenticated } from '@/lib/cookies';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -12,10 +13,24 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const dispatch = useDispatch();
-  const { loading, error } = useSelector((state) => state.auth);
+  const { loading, error, isAuthenticated: isAuthenticatedState, sessionChecked } = useSelector((state) => state.auth);
 
   // Check if we have a callback code from Upstox
   const callbackCode = searchParams.get('callback_code');
+
+  // Check for existing session on component mount
+  useEffect(() => {
+    // If we already checked the session and the user is authenticated, redirect to dashboard
+    if (sessionChecked && isAuthenticatedState) {
+      router.push('/dashboard');
+      return;
+    }
+
+    // If we haven't checked the session yet, check it
+    if (!sessionChecked && isAuthenticated()) {
+      dispatch(checkAuth());
+    }
+  }, [dispatch, router, sessionChecked, isAuthenticatedState]);
 
   useEffect(() => {
     // Store the callback code in localStorage if it exists

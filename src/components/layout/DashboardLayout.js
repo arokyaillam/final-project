@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import { setActiveMainMenu } from '@/store/slices/navigationSlice';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import Header from './Header';
 import Sidebar from './Sidebar';
 
@@ -28,15 +29,17 @@ const DashboardLayout = ({ children }) => {
   }, [pathname, dispatch]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      <div className="flex">
-        {sidebarOpen && <Sidebar />}
-        <main className={`flex-1 p-6 ${sidebarOpen ? 'ml-64' : 'ml-0'} transition-all duration-300`}>
-          {children}
-        </main>
+    <ProtectedRoute>
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="flex">
+          {sidebarOpen && <Sidebar />}
+          <main className={`flex-1 p-6 ${sidebarOpen ? 'ml-64' : 'ml-0'} transition-all duration-300`}>
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </ProtectedRoute>
   );
 };
 
