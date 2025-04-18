@@ -153,15 +153,37 @@ export async function GET(request) {
       return NextResponse.redirect(new URL('/dashboard?error=invalid_token_data', request.url));
     }
 
-    // Set default values for missing fields
+    // Handle Upstox API response format
+    // The API returns a different format than expected
     const accessToken = tokenData.access_token;
-    const refreshToken = tokenData.refresh_token || 'default-refresh-token';
-    const tokenType = tokenData.token_type || 'Bearer';
-    const expiresIn = tokenData.expires_in || 86400; // Default to 24 hours if missing
 
-    // Calculate token expiration date
-    const expiresAt = new Date();
-    expiresAt.setSeconds(expiresAt.getSeconds() + expiresIn);
+    // Extract expiration time from JWT token if possible
+    let expiresIn = 86400; // Default to 24 hours
+    let expiresAt = new Date();
+
+    try {
+      // Try to parse the JWT token to get the expiration time
+      const tokenParts = accessToken.split('.');
+      if (tokenParts.length === 3) {
+        const payload = JSON.parse(Buffer.from(tokenParts[1], 'base64').toString());
+        if (payload.exp) {
+          // exp is in seconds since epoch
+          expiresAt = new Date(payload.exp * 1000);
+          // Calculate expiresIn as seconds from now
+          expiresIn = Math.floor((expiresAt.getTime() - Date.now()) / 1000);
+          console.log('Extracted expiration from JWT:', expiresAt, 'expiresIn:', expiresIn);
+        }
+      }
+    } catch (error) {
+      console.error('Error parsing JWT token:', error);
+      // Use default values
+      expiresAt = new Date(Date.now() + 86400 * 1000); // 24 hours from now
+      expiresIn = 86400;
+    }
+
+    // Use a fixed refresh token since the API doesn't provide one
+    const refreshToken = 'upstox-refresh-token-' + Date.now();
+    const tokenType = 'Bearer';
 
     console.log('Calculated expiration date:', expiresAt);
 
