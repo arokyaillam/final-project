@@ -21,44 +21,39 @@ export default function LoginPage() {
   // State to track if we're checking authentication
   const [isCheckingAuth, setIsCheckingAuth] = useState(false);
 
-  // Check for existing session on component mount
+  // Immediate check for authentication on component mount
   useEffect(() => {
-    // If we already checked the session and the user is authenticated, redirect to dashboard
+    console.log('Login Page - Initial auth check');
+    console.log('Login Page - Auth state:', { isAuthenticated: isAuthenticatedState, sessionChecked, hasCookies: isAuthenticated() });
+
+    // If Redux state shows authenticated, redirect immediately
     if (isAuthenticatedState) {
+      console.log('Login Page - Already authenticated in Redux state, redirecting to dashboard');
       router.push('/dashboard');
       return;
     }
 
-    // If we haven't checked the session yet, check it
-    if (!sessionChecked && isAuthenticated() && !isCheckingAuth) {
-      setIsCheckingAuth(true);
+    // If we have cookies, assume authenticated and redirect immediately
+    // This provides a better UX by avoiding the loading state
+    if (isAuthenticated()) {
+      console.log('Login Page - Found auth cookies, redirecting to dashboard immediately');
+      router.push('/dashboard');
 
-      // Add a timeout to prevent infinite loading
-      const timeoutId = setTimeout(() => {
-        // If verification takes too long, assume it failed
-        if (isCheckingAuth) {
-          console.log('Session verification timed out');
-          setIsCheckingAuth(false);
-        }
-      }, 3000); // 3 seconds timeout
-
-      // Dispatch the check auth action
-      dispatch(checkAuth())
-        .unwrap()
-        .then(() => {
-          clearTimeout(timeoutId);
-          router.push('/dashboard');
-        })
-        .catch((error) => {
-          console.error('Auth check failed:', error);
-          clearTimeout(timeoutId);
-          setIsCheckingAuth(false);
-        });
-
-      // Clean up timeout on unmount
-      return () => clearTimeout(timeoutId);
+      // Also trigger the check auth action in the background to update Redux state
+      // This ensures the state is properly updated for future navigation
+      if (!sessionChecked && !isCheckingAuth) {
+        setIsCheckingAuth(true);
+        dispatch(checkAuth())
+          .finally(() => {
+            setIsCheckingAuth(false);
+          });
+      }
+      return;
     }
-  }, [dispatch, router, sessionChecked, isAuthenticatedState, isCheckingAuth]);
+
+    // If we get here, we're not authenticated and should show the login form
+    console.log('Login Page - Not authenticated, showing login form');
+  }, [isAuthenticatedState, isAuthenticated, router, dispatch, sessionChecked, isCheckingAuth]);
 
   useEffect(() => {
     // Store the callback code in localStorage if it exists
