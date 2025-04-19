@@ -33,8 +33,15 @@ export const loginUser = createAsyncThunk(
 
       // Handle different error scenarios
       if (error.isLoginError) {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('Auth Slice - Handling login-specific error');
+        }
         // This is a login-specific error that we've already formatted
-        return rejectWithValue(error.response?.data || { error: 'Invalid credentials' });
+        // Extract just the data part to avoid the circular reference
+        return rejectWithValue({
+          error: error.response?.data?.error || 'Invalid credentials',
+          status: error.status || 401
+        });
       }
 
       if (error.response?.data) {

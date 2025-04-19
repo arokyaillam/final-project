@@ -94,16 +94,28 @@ api.interceptors.response.use(
         // Create a standardized error object
         const errorData = error.response?.data || { error: 'Invalid credentials' };
 
-        // Just pass through the error for the login page to handle
-        return Promise.reject({
-          ...error,
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('API Service - Creating standardized login error:', {
+            data: errorData,
+            status: error.response?.status
+          });
+        }
+
+        // Create a clean error object without circular references
+        const cleanError = {
+          status: error.response?.status || 401,
+          message: error.message || 'Request failed',
           response: {
-            ...error.response,
-            data: errorData
+            data: errorData,
+            status: error.response?.status || 401,
+            statusText: error.response?.statusText || 'Unauthorized'
           },
           // Add a custom property to make it easier to identify this error
           isLoginError: true
-        });
+        };
+
+        // Just pass through the error for the login page to handle
+        return Promise.reject(cleanError);
       }
 
       // For other pages, redirect to login

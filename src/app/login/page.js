@@ -140,6 +140,10 @@ export default function LoginPage() {
 
           // Check if the error is about invalid credentials
           if (resultAction.payload?.error === 'Invalid credentials') {
+            if (process.env.NODE_ENV !== 'production') {
+              console.log('Login Page - Invalid credentials detected, offering account creation');
+            }
+
             // Show a confirmation dialog to create a new account
             const confirmCreate = window.confirm(
               'Account not found. Would you like to create a new account with this email?'
@@ -147,6 +151,10 @@ export default function LoginPage() {
 
             if (confirmCreate) {
               setShouldRedirectToRegister(true);
+            }
+          } else {
+            if (process.env.NODE_ENV !== 'production') {
+              console.log('Login Page - Login error:', resultAction.payload);
             }
           }
         }
