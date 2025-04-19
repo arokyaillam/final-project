@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useDispatch, useSelector } from 'react-redux';
-import { registerUser, checkAuth } from '@/store/slices/authSlice';
+import { registerUser, checkAuth, clearError } from '@/store/slices/authSlice';
 import { isAuthenticated } from '@/lib/cookies';
 
 export default function RegisterPage() {
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -25,7 +26,18 @@ export default function RegisterPage() {
   // Set isBrowser to true once component mounts (client-side only)
   useEffect(() => {
     setIsBrowser(true);
-  }, []);
+
+    // Check for email in query params (from login redirect)
+    const emailParam = searchParams.get('email');
+    if (emailParam) {
+      setEmail(emailParam);
+    }
+
+    // Clear any previous errors
+    if (error) {
+      dispatch(clearError());
+    }
+  }, [searchParams, dispatch, error]);
 
   // Authentication check effect - only runs on client-side
   useEffect(() => {
@@ -65,7 +77,7 @@ export default function RegisterPage() {
     console.log('Register Page - Not authenticated, showing register form');
   }, [isAuthenticatedState, router, dispatch, sessionChecked, isCheckingAuth, isBrowser]);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
 
     // Reset password error
@@ -88,12 +100,18 @@ export default function RegisterPage() {
       return;
     }
 
-    const resultAction = await dispatch(registerUser({ email, password }));
+    try {
+      const resultAction = await dispatch(registerUser({ email, password }));
 
-    if (registerUser.fulfilled.match(resultAction)) {
-      router.push('/dashboard');
+      if (registerUser.fulfilled.match(resultAction)) {
+        router.push('/dashboard');
+      }
+    } catch (error) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('Register Page - Error during registration:', error);
+      }
     }
-  };
+  }, [email, password, confirmPassword, dispatch, router]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
