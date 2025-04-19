@@ -104,20 +104,17 @@ export default function LoginPage() {
     }
 
     try {
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('Login Page - Attempting login with server action:', { email });
-      }
+      console.log('Login Page - Attempting login with server action:', { email });
 
       // Clear any previous errors
       dispatch(clearError());
 
       // Use server action directly (bypass API)
       const result = await loginAction({ email, password });
+      console.log('Login Page - Server action result:', result);
 
-      if (result.success) {
-        if (process.env.NODE_ENV !== 'production') {
-          console.log('Login Page - Login successful via server action');
-        }
+      if (result && result.success) {
+        console.log('Login Page - Login successful via server action');
 
         // Set cookies on the client side
         setAuthCookies(result.token, result.user);
@@ -146,21 +143,17 @@ export default function LoginPage() {
           router.push('/dashboard');
         }
       } else {
-        if (process.env.NODE_ENV !== 'production') {
-          console.log('Login Page - Login failed via server action:', result);
-        }
+        console.log('Login Page - Login failed via server action:', result);
 
         // Set error in Redux state
         dispatch({
           type: 'auth/loginUser/rejected',
-          payload: { error: result.error || 'Login failed' }
+          payload: { error: result?.error || 'Login failed' }
         });
 
         // Check if the error is about invalid credentials
-        if (result.error === 'Invalid credentials') {
-          if (process.env.NODE_ENV !== 'production') {
-            console.log('Login Page - Invalid credentials detected, offering account creation');
-          }
+        if (result?.error === 'Invalid credentials') {
+          console.log('Login Page - Invalid credentials detected, offering account creation');
 
           // Show a confirmation dialog to create a new account
           const confirmCreate = window.confirm(
@@ -173,14 +166,17 @@ export default function LoginPage() {
         }
       }
     } catch (error) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('Login Page - Error during login - Full error:', error);
-        console.error('Login Page - Error during login:', {
-          message: error.message,
-          stack: error.stack,
-          type: error.constructor.name
-        });
-      }
+      console.log('Login Page - Error during login - Full error:', error);
+
+      // Log error details safely
+      const errorDetails = {
+        message: error?.message || 'Unknown error',
+        name: error?.name || 'Error',
+        stack: error?.stack || 'No stack trace',
+        toString: error?.toString ? error.toString() : 'Error cannot be converted to string'
+      };
+
+      console.error('Login Page - Error during login:', errorDetails);
 
       // Set a generic error message if something went wrong
       dispatch({
