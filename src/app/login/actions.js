@@ -55,8 +55,14 @@ export async function loginAction(credentials) {
     const token = signToken({ userId: user._id });
 
     console.log('Server Action - Setting cookies');
+    // Convert MongoDB ObjectId to string
+    const userId = user._id.toString();
+
+    // Get the cookie store
+    const cookieStore = cookies();
+
     // Set cookies
-    cookies().set('token', token, {
+    cookieStore.set('token', token, {
       httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
       maxAge: 24 * 60 * 60, // 24 hours
@@ -65,10 +71,7 @@ export async function loginAction(credentials) {
     });
 
     // Also set a cookie with user info for client-side access
-    // Convert MongoDB ObjectId to string
-    const userId = user._id.toString();
-
-    cookies().set('user_info', JSON.stringify({
+    cookieStore.set('user_info', JSON.stringify({
       id: userId,
       email: user.email,
       lastLogin: new Date().toISOString()
