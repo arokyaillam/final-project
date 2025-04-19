@@ -54,6 +54,9 @@ const Header = () => {
       case 'optionData':
         router.push('/dashboard/option-data');
         break;
+      case 'settings':
+        router.push('/dashboard/settings');
+        break;
       default:
         router.push('/dashboard');
     }
@@ -182,6 +185,16 @@ const Header = () => {
             >
               Option Data
             </button>
+            <button
+              onClick={() => handleMenuClick('settings')}
+              className={`px-3 py-2 text-sm font-medium rounded-md ${
+                activeMainMenu === 'settings'
+                  ? 'bg-indigo-100 text-indigo-700'
+                  : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+              }`}
+            >
+              Settings
+            </button>
           </nav>
 
           {/* User menu */}
@@ -308,6 +321,16 @@ const Header = () => {
               }`}
             >
               Option Data
+            </button>
+            <button
+              onClick={() => handleMenuClick('settings')}
+              className={`block w-full text-left px-3 py-2 text-base font-medium ${
+                activeMainMenu === 'settings'
+                  ? 'bg-indigo-100 text-indigo-700 border-l-4 border-indigo-500'
+                  : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50 border-l-4 border-transparent'
+              }`}
+            >
+              Settings
             </button>
 
             {/* Logout button in mobile menu */}

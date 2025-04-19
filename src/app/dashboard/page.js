@@ -1,108 +1,33 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchUpstoxToken, connectToUpstox } from '@/store/slices/upstoxSlice';
-import UpstoxCredentialsForm from '@/components/UpstoxCredentialsForm';
+import { useSelector } from 'react-redux';
+import Link from 'next/link';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import api from '@/services/api';
+import { Settings, User, BarChart2, TrendingUp, ExternalLink } from 'lucide-react';
 
 export default function DashboardPage() {
-  const router = useRouter();
-  const dispatch = useDispatch();
   const { user, isAuthenticated } = useSelector((state) => state.auth);
-  const { token, isConnected, loading, error } = useSelector((state) => state.upstox);
   const [isBrowser, setIsBrowser] = useState(false);
-  const [hasCredentials, setHasCredentials] = useState(false);
-  const [credentialsLoading, setCredentialsLoading] = useState(true);
 
   // Set isBrowser to true once component mounts (client-side only)
   useEffect(() => {
     setIsBrowser(true);
   }, []);
 
-  // Debug user data
-  useEffect(() => {
-    if (!isBrowser) return;
-    console.log('Dashboard - User data:', user);
-    console.log('Dashboard - Authentication state:', isAuthenticated);
-  }, [user, isAuthenticated, isBrowser]);
-
-  useEffect(() => {
-    // Skip on server-side rendering
-    if (!isBrowser) return;
-
-    // Only check credentials if user is authenticated
-    if (!isAuthenticated && !user) {
-      console.log('Dashboard - Skipping credentials check, user not authenticated');
-      return;
-    }
-
-    // Check if user has Upstox credentials
-    const checkCredentials = async () => {
-      try {
-        console.log('Dashboard - Checking Upstox credentials');
-        setCredentialsLoading(true);
-
-        const response = await api.get('/upstox/credentials');
-        console.log('Dashboard - Credentials response:', response.data);
-
-        setHasCredentials(response.data.hasCredentials);
-        setCredentialsLoading(false);
-
-        // If user has credentials, fetch Upstox token
-        if (response.data.hasCredentials) {
-          console.log('Dashboard - User has credentials, fetching token');
-          try {
-            const result = await dispatch(fetchUpstoxToken());
-
-            // If token fetch was successful and we have an access token, store it in localStorage
-            if (fetchUpstoxToken.fulfilled.match(result) && result.payload.accessToken) {
-              console.log('Dashboard - Token fetch successful, storing token');
-              localStorage.setItem('upstox_access_token', result.payload.accessToken);
-              localStorage.setItem('upstox_token', result.payload.token || '');
-            }
-          } catch (tokenError) {
-            console.error('Dashboard - Failed to fetch token:', tokenError);
-            // Continue even if token fetch fails
-          }
-        }
-      } catch (error) {
-        console.error('Dashboard - Failed to check credentials:', error);
-        setCredentialsLoading(false);
-      }
-    };
-
-    checkCredentials();
-  }, [dispatch, isBrowser, isAuthenticated, user]);
-
-
-
-  const handleConnectUpstox = async () => {
-    // Pass the user ID to the connectToUpstox function
-    const userId = user?.id || user?._id;
-    console.log('Connecting to Upstox with user ID:', userId);
-    const result = await dispatch(connectToUpstox(userId));
-
-    // After connecting, fetch the token
-    if (connectToUpstox.fulfilled.match(result)) {
-      const tokenResult = await dispatch(fetchUpstoxToken());
-
-      // If token fetch was successful and we have an access token, store it in localStorage
-      if (fetchUpstoxToken.fulfilled.match(tokenResult) && tokenResult.payload.accessToken) {
-        localStorage.setItem('upstox_access_token', tokenResult.payload.accessToken);
-        localStorage.setItem('upstox_token', tokenResult.payload.token || '');
-      }
-    }
-  };
-
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+        </div>
+
         <div className="bg-white shadow sm:rounded-lg">
           <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-base font-semibold leading-6 text-gray-900">User Information</h3>
+            <div className="flex items-center mb-4">
+              <User className="h-6 w-6 text-indigo-600 mr-2" />
+              <h3 className="text-lg font-medium leading-6 text-gray-900">User Information</h3>
+            </div>
             <div className="mt-2 max-w-xl text-sm text-gray-500">
               <p>Email: {!isBrowser ? 'Loading...' : (user?.email || 'Loading...')}</p>
               <p>User ID: {!isBrowser ? 'Loading...' : (user?.id || user?._id || 'Loading...')}</p>
@@ -111,66 +36,82 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {!credentialsLoading && !hasCredentials && (
-          <UpstoxCredentialsForm
-            onSuccess={() => setHasCredentials(true)}
-          />
-        )}
-
-        {hasCredentials && (
-          <div className="mt-8 bg-white shadow sm:rounded-lg">
-            <div className="px-4 py-5 sm:p-6">
-              <h3 className="text-base font-semibold leading-6 text-gray-900">Upstox Integration</h3>
-              <div className="mt-2 max-w-xl text-sm text-gray-500">
-                <p>
-                  {isConnected
-                    ? 'Your account is connected to Upstox.'
-                    : 'Connect your account to Upstox to access trading features.'}
-                </p>
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="p-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0 bg-indigo-500 rounded-md p-3">
+                  <Settings className="h-6 w-6 text-white" />
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="text-sm font-medium text-gray-500 truncate">Settings</dt>
+                    <dd>
+                      <div className="text-lg font-medium text-gray-900">Account & Preferences</div>
+                    </dd>
+                  </dl>
+                </div>
               </div>
-              <div className="mt-5">
-                {isConnected ? (
-                  <div className="rounded-md bg-green-50 p-4">
-                    <div className="flex">
-                      <div className="ml-3">
-                        <p className="text-sm font-medium text-green-800">
-                          Connected to Upstox
-                        </p>
-                        <p className="mt-2 text-sm text-green-700">
-                          Connected since: {token?.connectedAt ? new Date(token.connectedAt).toLocaleString() : 'Unknown'}
-                        </p>
-                        <p className="mt-2 text-sm text-green-700">
-                          Token expires at: {token?.expiresAt ? new Date(token.expiresAt).toLocaleString() : 'Unknown'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={handleConnectUpstox}
-                    disabled={loading}
-                    className="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:bg-blue-300"
-                  >
-                    {loading ? 'Connecting...' : 'Connect to Upstox'}
-                  </button>
-                )}
-
-                {error && (
-                  <div className="mt-3 rounded-md bg-red-50 p-4">
-                    <div className="flex">
-                      <div className="ml-3">
-                        <p className="text-sm font-medium text-red-800">
-                          {error.includes('not found') ? 'Please connect to Upstox to continue.' : `Error: ${error}`}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
+            </div>
+            <div className="bg-gray-50 px-5 py-3">
+              <div className="text-sm">
+                <Link href="/dashboard/settings" className="font-medium text-indigo-600 hover:text-indigo-900">
+                  Manage Settings
+                </Link>
               </div>
             </div>
           </div>
-        )}
+
+          <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="p-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0 bg-indigo-500 rounded-md p-3">
+                  <BarChart2 className="h-6 w-6 text-white" />
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="text-sm font-medium text-gray-500 truncate">Market Data</dt>
+                    <dd>
+                      <div className="text-lg font-medium text-gray-900">View Market Information</div>
+                    </dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+            <div className="bg-gray-50 px-5 py-3">
+              <div className="text-sm">
+                <Link href="/dashboard/market-data" className="font-medium text-indigo-600 hover:text-indigo-900">
+                  View Market Data
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="p-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0 bg-indigo-500 rounded-md p-3">
+                  <ExternalLink className="h-6 w-6 text-white" />
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="text-sm font-medium text-gray-500 truncate">Upstox Integration</dt>
+                    <dd>
+                      <div className="text-lg font-medium text-gray-900">Connect Trading Account</div>
+                    </dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+            <div className="bg-gray-50 px-5 py-3">
+              <div className="text-sm">
+                <Link href="/dashboard/settings/upstox" className="font-medium text-indigo-600 hover:text-indigo-900">
+                  Manage Integration
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </DashboardLayout>
   );

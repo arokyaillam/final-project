@@ -1,11 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { ExternalLink, User, Bell, Settings as SettingsIcon } from 'lucide-react';
+import { Bell, Mail, Monitor, Smartphone, AlertTriangle } from 'lucide-react';
 
-export default function SettingsPage() {
+export default function NotificationsSettingsPage() {
   const [notifications, setNotifications] = useState({
     email: true,
     browser: false,
@@ -14,90 +13,54 @@ export default function SettingsPage() {
     marketUpdates: false,
     priceAlerts: true,
   });
-
-  const [theme, setTheme] = useState('light');
-
+  
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  
   const handleNotificationChange = (key) => {
     setNotifications(prev => ({
       ...prev,
       [key]: !prev[key]
     }));
+    
+    // Reset success message when changes are made
+    setSaveSuccess(false);
   };
-
+  
+  const handleSave = () => {
+    // Here you would call an API to save the notification settings
+    // For now, we'll just simulate success
+    setSaveSuccess(true);
+    
+    // Hide success message after 3 seconds
+    setTimeout(() => {
+      setSaveSuccess(false);
+    }, 3000);
+  };
+  
   return (
     <DashboardLayout>
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Notification Settings</h1>
         </div>
-
+        
         <div className="bg-white shadow sm:rounded-lg">
           <div className="px-6 py-5 sm:p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Settings Menu</h2>
-
-            <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
-              <div className="bg-white overflow-hidden shadow rounded-lg divide-y divide-gray-200">
-                <div className="px-4 py-5 sm:px-6">
-                  <div className="flex items-center">
-                    <SettingsIcon className="h-5 w-5 text-gray-400 mr-2" />
-                    <h3 className="text-lg font-medium leading-6 text-gray-900">General Settings</h3>
-                  </div>
-                  <p className="mt-1 max-w-2xl text-sm text-gray-500">Manage your general application settings.</p>
-                </div>
-                <div className="px-4 py-4 sm:px-6">
-                  <Link href="/dashboard/settings" className="text-indigo-600 hover:text-indigo-900 font-medium">Manage General Settings</Link>
-                </div>
-              </div>
-
-              <div className="bg-white overflow-hidden shadow rounded-lg divide-y divide-gray-200">
-                <div className="px-4 py-5 sm:px-6">
-                  <div className="flex items-center">
-                    <ExternalLink className="h-5 w-5 text-gray-400 mr-2" />
-                    <h3 className="text-lg font-medium leading-6 text-gray-900">Upstox Integration</h3>
-                  </div>
-                  <p className="mt-1 max-w-2xl text-sm text-gray-500">Connect and manage your Upstox trading account.</p>
-                </div>
-                <div className="px-4 py-4 sm:px-6">
-                  <Link href="/dashboard/settings/upstox" className="text-indigo-600 hover:text-indigo-900 font-medium">Manage Upstox Integration</Link>
-                </div>
-              </div>
-
-              <div className="bg-white overflow-hidden shadow rounded-lg divide-y divide-gray-200">
-                <div className="px-4 py-5 sm:px-6">
-                  <div className="flex items-center">
-                    <User className="h-5 w-5 text-gray-400 mr-2" />
-                    <h3 className="text-lg font-medium leading-6 text-gray-900">Account Settings</h3>
-                  </div>
-                  <p className="mt-1 max-w-2xl text-sm text-gray-500">Manage your account details and password.</p>
-                </div>
-                <div className="px-4 py-4 sm:px-6">
-                  <Link href="/dashboard/settings/account" className="text-indigo-600 hover:text-indigo-900 font-medium">Manage Account</Link>
-                </div>
-              </div>
-
-              <div className="bg-white overflow-hidden shadow rounded-lg divide-y divide-gray-200">
-                <div className="px-4 py-5 sm:px-6">
-                  <div className="flex items-center">
-                    <Bell className="h-5 w-5 text-gray-400 mr-2" />
-                    <h3 className="text-lg font-medium leading-6 text-gray-900">Notifications</h3>
-                  </div>
-                  <p className="mt-1 max-w-2xl text-sm text-gray-500">Manage your notification preferences.</p>
-                </div>
-                <div className="px-4 py-4 sm:px-6">
-                  <Link href="/dashboard/settings/notifications" className="text-indigo-600 hover:text-indigo-900 font-medium">Manage Notifications</Link>
-                </div>
-              </div>
+            <div className="flex items-center mb-4">
+              <Bell className="h-6 w-6 text-indigo-600 mr-2" />
+              <h2 className="text-xl font-semibold text-gray-900">Notification Preferences</h2>
             </div>
-          </div>
-        </div>
-
-        <div className="bg-white shadow sm:rounded-lg">
-          <div className="px-6 py-5 sm:p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Notification Settings</h2>
-
+            
+            <p className="text-sm text-gray-500 mb-6">
+              Manage how and when you receive notifications from the trading platform.
+            </p>
+            
             <div className="mt-6 space-y-6">
               <fieldset>
-                <legend className="text-base font-medium text-gray-900">Notification Methods</legend>
+                <legend className="text-base font-medium text-gray-900 flex items-center">
+                  <Mail className="h-5 w-5 text-gray-400 mr-2" />
+                  Notification Methods
+                </legend>
                 <div className="mt-4 space-y-4">
                   <div className="flex items-start">
                     <div className="flex h-5 items-center">
@@ -115,7 +78,7 @@ export default function SettingsPage() {
                       <p className="text-gray-500">Get notified via email for important updates.</p>
                     </div>
                   </div>
-
+                  
                   <div className="flex items-start">
                     <div className="flex h-5 items-center">
                       <input
@@ -132,7 +95,7 @@ export default function SettingsPage() {
                       <p className="text-gray-500">Receive browser notifications when you're online.</p>
                     </div>
                   </div>
-
+                  
                   <div className="flex items-start">
                     <div className="flex h-5 items-center">
                       <input
@@ -151,9 +114,12 @@ export default function SettingsPage() {
                   </div>
                 </div>
               </fieldset>
-
+              
               <fieldset>
-                <legend className="text-base font-medium text-gray-900">Notification Types</legend>
+                <legend className="text-base font-medium text-gray-900 flex items-center">
+                  <AlertTriangle className="h-5 w-5 text-gray-400 mr-2" />
+                  Notification Types
+                </legend>
                 <div className="mt-4 space-y-4">
                   <div className="flex items-start">
                     <div className="flex h-5 items-center">
@@ -171,7 +137,7 @@ export default function SettingsPage() {
                       <p className="text-gray-500">Get notified when your trades are executed.</p>
                     </div>
                   </div>
-
+                  
                   <div className="flex items-start">
                     <div className="flex h-5 items-center">
                       <input
@@ -188,7 +154,7 @@ export default function SettingsPage() {
                       <p className="text-gray-500">Receive updates about market events and news.</p>
                     </div>
                   </div>
-
+                  
                   <div className="flex items-start">
                     <div className="flex h-5 items-center">
                       <input
@@ -210,54 +176,49 @@ export default function SettingsPage() {
             </div>
           </div>
         </div>
-
+        
         <div className="bg-white shadow sm:rounded-lg">
           <div className="px-6 py-5 sm:p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Appearance</h2>
-
-            <div className="mt-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Email Frequency</h2>
+            
+            <div className="mt-4">
               <fieldset>
-                <legend className="text-base font-medium text-gray-900">Theme</legend>
-                <div className="mt-4 space-y-4">
+                <legend className="sr-only">Email frequency</legend>
+                <div className="space-y-4">
                   <div className="flex items-center">
                     <input
-                      id="light"
-                      name="theme"
+                      id="frequency-realtime"
+                      name="frequency"
                       type="radio"
                       className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                      checked={theme === 'light'}
-                      onChange={() => setTheme('light')}
+                      defaultChecked
                     />
-                    <label htmlFor="light" className="ml-3 block text-sm font-medium text-gray-700">
-                      Light
+                    <label htmlFor="frequency-realtime" className="ml-3 block text-sm font-medium text-gray-700">
+                      Real-time
                     </label>
                   </div>
-
+                  
                   <div className="flex items-center">
                     <input
-                      id="dark"
-                      name="theme"
+                      id="frequency-daily"
+                      name="frequency"
                       type="radio"
                       className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                      checked={theme === 'dark'}
-                      onChange={() => setTheme('dark')}
                     />
-                    <label htmlFor="dark" className="ml-3 block text-sm font-medium text-gray-700">
-                      Dark
+                    <label htmlFor="frequency-daily" className="ml-3 block text-sm font-medium text-gray-700">
+                      Daily digest
                     </label>
                   </div>
-
+                  
                   <div className="flex items-center">
                     <input
-                      id="system"
-                      name="theme"
+                      id="frequency-weekly"
+                      name="frequency"
                       type="radio"
                       className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                      checked={theme === 'system'}
-                      onChange={() => setTheme('system')}
                     />
-                    <label htmlFor="system" className="ml-3 block text-sm font-medium text-gray-700">
-                      System
+                    <label htmlFor="frequency-weekly" className="ml-3 block text-sm font-medium text-gray-700">
+                      Weekly digest
                     </label>
                   </div>
                 </div>
@@ -265,7 +226,19 @@ export default function SettingsPage() {
             </div>
           </div>
         </div>
-
+        
+        {saveSuccess && (
+          <div className="rounded-md bg-green-50 p-4">
+            <div className="flex">
+              <div className="ml-3">
+                <p className="text-sm font-medium text-green-800">
+                  Notification settings saved successfully!
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+        
         <div className="flex justify-end">
           <button
             type="button"
@@ -275,6 +248,7 @@ export default function SettingsPage() {
           </button>
           <button
             type="button"
+            onClick={handleSave}
             className="ml-3 inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
           >
             Save

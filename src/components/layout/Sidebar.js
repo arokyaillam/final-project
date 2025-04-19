@@ -12,7 +12,7 @@ import {
   User, CreditCard, BarChart2, Settings, List,
   Database, TrendingUp, Plus, Package, Activity,
   ShoppingCart, Briefcase, PieChart, BarChart, Calculator,
-  LogOut
+  LogOut, Link as LinkIcon, ExternalLink
 } from 'lucide-react';
 
 const Sidebar = () => {
@@ -56,6 +56,13 @@ const Sidebar = () => {
           { id: 'optionChain', label: 'Option Chain', icon: <BarChart className="h-5 w-5" />, path: '/dashboard/option-data/option-chain' },
           { id: 'optionContract', label: 'Option Contract', icon: <Briefcase className="h-5 w-5" />, path: '/dashboard/option-data/option-contract' },
           { id: 'calculation', label: 'Calculation', icon: <Calculator className="h-5 w-5" />, path: '/dashboard/option-data/calculation' },
+        ];
+      case 'settings':
+        return [
+          { id: 'general', label: 'General', icon: <Settings className="h-5 w-5" />, path: '/dashboard/settings' },
+          { id: 'upstox', label: 'Upstox Integration', icon: <ExternalLink className="h-5 w-5" />, path: '/dashboard/settings/upstox' },
+          { id: 'account', label: 'Account', icon: <User className="h-5 w-5" />, path: '/dashboard/settings/account' },
+          { id: 'notifications', label: 'Notifications', icon: <LinkIcon className="h-5 w-5" />, path: '/dashboard/settings/notifications' },
         ];
       default:
         return [];
@@ -128,10 +135,10 @@ const Sidebar = () => {
   if (!sidebarOpen) return null;
 
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 h-[calc(100vh-4rem)] overflow-y-auto">
+    <aside className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 h-[calc(100vh-4rem)] overflow-y-auto">
       <div className="py-4">
         <div className="px-4 mb-4">
-          <h2 className="text-lg font-semibold text-gray-900 capitalize">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 capitalize">
             {activeMainMenu === 'marketData'
               ? 'Market Data'
               : activeMainMenu === 'paperTrading'
