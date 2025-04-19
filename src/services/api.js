@@ -74,8 +74,25 @@ api.interceptors.response.use(
     // Handle authentication errors
     if (error.response?.status === 401) {
       if (process.env.NODE_ENV !== 'production') {
-        console.log('Authentication error detected, redirecting to login');
+        console.log('Authentication error detected');
       }
+
+      // Special handling for login page - don't redirect
+      if (error.config?.url === '/auth/login') {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('Login attempt failed with 401, not redirecting');
+        }
+        // Just pass through the error for the login page to handle
+        return Promise.reject({
+          ...error,
+          response: {
+            ...error.response,
+            data: error.response?.data || { error: 'Invalid credentials' }
+          }
+        });
+      }
+
+      // For other pages, redirect to login
       // Only redirect if we're in the browser
       if (typeof window !== 'undefined') {
         // Don't redirect if we're already on the login page

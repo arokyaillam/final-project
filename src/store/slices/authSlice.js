@@ -8,13 +8,36 @@ export const loginUser = createAsyncThunk(
   'auth/login',
   async (credentials, { rejectWithValue }) => {
     try {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('Auth Slice - Attempting login with:', { email: credentials.email });
+      }
+
       const response = await api.post('/auth/login', credentials);
 
       // Token is stored in HTTP-only cookie by the server
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('Auth Slice - Login successful');
+      }
 
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data || { error: 'Login failed' });
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('Auth Slice - Login error:', {
+          status: error.response?.status,
+          data: error.response?.data,
+          message: error.message
+        });
+      }
+
+      // Ensure we have a proper error response
+      const errorData = error.response?.data || { error: 'Login failed' };
+
+      // Make sure the error message is set
+      if (!errorData.error) {
+        errorData.error = 'Login failed';
+      }
+
+      return rejectWithValue(errorData);
     }
   }
 );

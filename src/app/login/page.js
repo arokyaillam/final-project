@@ -103,9 +103,17 @@ export default function LoginPage() {
     }
 
     try {
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('Login Page - Attempting login with:', { email });
+      }
+
       const resultAction = await dispatch(loginUser({ email, password }));
 
       if (loginUser.fulfilled.match(resultAction)) {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('Login Page - Login successful');
+        }
+
         // Check if we have a stored callback code
         const storedCallbackCode = localStorage.getItem('upstox_callback_code');
 
@@ -120,6 +128,10 @@ export default function LoginPage() {
           router.push('/dashboard');
         }
       } else if (loginUser.rejected.match(resultAction)) {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('Login Page - Login rejected:', resultAction.payload);
+        }
+
         // Check if the error is about invalid credentials
         if (resultAction.payload?.error === 'Invalid credentials') {
           // Show a confirmation dialog to create a new account
@@ -136,6 +148,12 @@ export default function LoginPage() {
       if (process.env.NODE_ENV !== 'production') {
         console.error('Login Page - Error during login:', error);
       }
+
+      // Set a generic error message if something went wrong
+      dispatch({
+        type: 'auth/loginUser/rejected',
+        payload: { error: 'Login failed. Please try again.' }
+      });
     }
   }, [email, password, dispatch, router]);
 
