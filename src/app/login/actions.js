@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 import connectToDatabase from '@/lib/db/mongodb';
 import User from '@/lib/db/models/User';
 import { signToken } from '@/lib/auth/jwt';
+import { NextResponse } from 'next/server';
 
 /**
  * Server action to handle login directly
@@ -58,38 +59,13 @@ export async function loginAction(credentials) {
     // Convert MongoDB ObjectId to string
     const userId = user._id.toString();
 
-    // Get the cookie store
-    const cookieStore = cookies();
-
-    // Set cookies
-    cookieStore.set('token', token, {
-      httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 24 * 60 * 60, // 24 hours
-      path: '/',
-      sameSite: 'lax',
-    });
-
-    // Also set a cookie with user info for client-side access
-    cookieStore.set('user_info', JSON.stringify({
-      id: userId,
-      email: user.email,
-      lastLogin: new Date().toISOString()
-    }), {
-      httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 24 * 60 * 60, // 24 hours
-      path: '/',
-      sameSite: 'lax',
-    });
-
     console.log('Server Action - Login successful');
 
     // Return success response with plain objects only
     return {
       success: true,
       user: {
-        id: userId, // Using the userId we already converted above
+        id: userId,
         email: user.email,
       },
       token

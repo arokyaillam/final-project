@@ -119,8 +119,12 @@ export default function LoginPage() {
           console.log('Login Page - Login successful via server action');
         }
 
-        // Set cookies on the client side as well
+        // Set cookies on the client side
         setAuthCookies(result.token, result.user);
+
+        // Also set cookies directly as a fallback
+        document.cookie = `token=${result.token}; Path=/; Max-Age=${24 * 60 * 60}; SameSite=Lax`;
+        document.cookie = `user_info=${JSON.stringify(result.user)}; Path=/; Max-Age=${24 * 60 * 60}; SameSite=Lax`;
 
         // Update Redux state
         dispatch({
