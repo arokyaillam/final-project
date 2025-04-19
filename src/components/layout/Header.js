@@ -59,7 +59,45 @@ const Header = () => {
     }
   };
 
-  // We're not using a handler function anymore, just direct links
+  // Handle logout directly
+  const handleLogout = async () => {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Header - Logging out user');
+    }
+
+    try {
+      // 1. Call the logout API
+      await fetch('/api/auth/logout-direct', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      // 2. Clear cookies directly
+      document.cookie = 'token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=lax;';
+      document.cookie = 'user_info=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=lax;';
+
+      // 3. Clear localStorage
+      localStorage.removeItem('upstox_access_token');
+      localStorage.removeItem('upstox_token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('auth');
+
+      // 4. Dispatch logout action
+      dispatch(logoutUser());
+
+      // 5. Redirect to login page
+      window.location.href = '/login';
+    } catch (error) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('Header - Logout error:', error);
+      }
+
+      // Even if there's an error, still try to redirect
+      window.location.href = '/login';
+    }
+  };
 
   // Close user menu when clicking outside
   useEffect(() => {
@@ -188,12 +226,12 @@ const Header = () => {
                     >
                       Settings
                     </Link>
-                    <Link
-                      href="/logout"
+                    <button
+                      onClick={handleLogout}
                       className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     >
                       Sign out
-                    </Link>
+                    </button>
                   </div>
                 </div>
               )}
@@ -273,12 +311,12 @@ const Header = () => {
             </button>
 
             {/* Logout button in mobile menu */}
-            <Link
-              href="/logout"
+            <button
+              onClick={handleLogout}
               className="block w-full text-left px-3 py-2 text-base font-medium text-red-600 hover:text-red-800 hover:bg-gray-50 border-l-4 border-transparent"
             >
               Sign out
-            </Link>
+            </button>
           </div>
         </div>
       )}
