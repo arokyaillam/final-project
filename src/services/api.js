@@ -57,11 +57,14 @@ api.interceptors.response.use(
     if (process.env.NODE_ENV !== 'production') {
       // Don't log canceled requests as errors
       if (error.message !== 'canceled' && error.name !== 'AbortError') {
+        console.log('API Response Error - Full error object:', error);
         console.error('API Response Error:', {
           url: error.config?.url,
           status: error.response?.status,
           statusText: error.response?.statusText,
-          message: error.message
+          message: error.message,
+          data: error.response?.data || 'No data',
+          stack: error.stack
         });
       } else {
         console.log('API Request canceled:', {
@@ -81,14 +84,25 @@ api.interceptors.response.use(
       if (error.config?.url === '/auth/login') {
         if (process.env.NODE_ENV !== 'production') {
           console.log('Login attempt failed with 401, not redirecting');
+          console.log('Login error details:', {
+            response: error.response,
+            data: error.response?.data,
+            message: error.message
+          });
         }
+
+        // Create a standardized error object
+        const errorData = error.response?.data || { error: 'Invalid credentials' };
+
         // Just pass through the error for the login page to handle
         return Promise.reject({
           ...error,
           response: {
             ...error.response,
-            data: error.response?.data || { error: 'Invalid credentials' }
-          }
+            data: errorData
+          },
+          // Add a custom property to make it easier to identify this error
+          isLoginError: true
         });
       }
 

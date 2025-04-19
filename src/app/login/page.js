@@ -5,8 +5,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useDispatch, useSelector } from 'react-redux';
 import { loginUser, checkAuth, clearError } from '@/store/slices/authSlice';
-import { isAuthenticated, getAuthToken } from '@/lib/cookies';
+import { isAuthenticated, getAuthToken, setAuthCookies } from '@/lib/cookies';
 import Cookies from 'js-cookie';
+import { loginAction } from './actions';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -107,55 +108,125 @@ export default function LoginPage() {
         console.log('Login Page - Attempting login with:', { email });
       }
 
-      const resultAction = await dispatch(loginUser({ email, password }));
+      // Clear any previous errors
+      dispatch(clearError());
 
-      if (loginUser.fulfilled.match(resultAction)) {
-        if (process.env.NODE_ENV !== 'production') {
-          console.log('Login Page - Login successful');
-        }
+      try {
+        // First try with Redux/API approach
+        const resultAction = await dispatch(loginUser({ email, password }));
 
-        // Check if we have a stored callback code
-        const storedCallbackCode = localStorage.getItem('upstox_callback_code');
-
-        if (storedCallbackCode) {
-          // Clear the stored code
-          localStorage.removeItem('upstox_callback_code');
-
-          // Redirect to the callback URL with the code and userId
-          router.push(`/api/upstox/callback?code=${storedCallbackCode}&userId=${resultAction.payload.user.id}`);
-        } else {
-          // Normal login flow
-          router.push('/dashboard');
-        }
-      } else if (loginUser.rejected.match(resultAction)) {
-        if (process.env.NODE_ENV !== 'production') {
-          console.log('Login Page - Login rejected:', resultAction.payload);
-        }
-
-        // Check if the error is about invalid credentials
-        if (resultAction.payload?.error === 'Invalid credentials') {
-          // Show a confirmation dialog to create a new account
-          const confirmCreate = window.confirm(
-            'Account not found. Would you like to create a new account with this email?'
-          );
-
-          if (confirmCreate) {
-            setShouldRedirectToRegister(true);
+        if (loginUser.fulfilled.match(resultAction)) {
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('Login Page - Login successful via API');
           }
+
+          // Check if we have a stored callback code
+          const storedCallbackCode = localStorage.getItem('upstox_callback_code');
+
+          if (storedCallbackCode) {
+            // Clear the stored code
+            localStorage.removeItem('upstox_callback_code');
+
+            // Redirect to the callback URL with the code and userId
+            router.push(`/api/upstox/callback?code=${storedCallbackCode}&userId=${resultAction.payload.user.id}`);
+          } else {
+            // Normal login flow
+            router.push('/dashboard');
+          }
+        } else if (loginUser.rejected.match(resultAction)) {
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('Login Page - Login rejected via API:', resultAction.payload);
+          }
+
+          // Check if the error is about invalid credentials
+          if (resultAction.payload?.error === 'Invalid credentials') {
+            // Show a confirmation dialog to create a new account
+            const confirmCreate = window.confirm(
+              'Account not found. Would you like to create a new account with this email?'
+            );
+
+            if (confirmCreate) {
+              setShouldRedirectToRegister(true);
+            }
+          }
+        }
+      } catch (apiError) {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('Login Page - API login failed, trying server action:', apiError);
+        }
+
+        // If the API approach fails, try with server action
+        try {
+          const result = await loginAction({ email, password });
+
+          if (result.success) {
+            if (process.env.NODE_ENV !== 'production') {
+              console.log('Login Page - Login successful via server action');
+            }
+
+            // Set cookies on the client side as well
+            setAuthCookies(result.token, result.user);
+
+            // Update Redux state
+            dispatch({
+              type: 'auth/loginUser/fulfilled',
+              payload: result
+            });
+
+            // Redirect to dashboard
+            router.push('/dashboard');
+          } else {
+            if (process.env.NODE_ENV !== 'production') {
+              console.log('Login Page - Login failed via server action:', result);
+            }
+
+            // Set error in Redux state
+            dispatch({
+              type: 'auth/loginUser/rejected',
+              payload: { error: result.error || 'Login failed' }
+            });
+
+            // Check if the error is about invalid credentials
+            if (result.error === 'Invalid credentials') {
+              // Show a confirmation dialog to create a new account
+              const confirmCreate = window.confirm(
+                'Account not found. Would you like to create a new account with this email?'
+              );
+
+              if (confirmCreate) {
+                setShouldRedirectToRegister(true);
+              }
+            }
+          }
+        } catch (serverActionError) {
+          if (process.env.NODE_ENV !== 'production') {
+            console.error('Login Page - Server action failed:', serverActionError);
+          }
+
+          // Set a generic error message if both approaches fail
+          dispatch({
+            type: 'auth/loginUser/rejected',
+            payload: { error: 'Login failed. Please try again later.' }
+          });
         }
       }
     } catch (error) {
       if (process.env.NODE_ENV !== 'production') {
-        console.error('Login Page - Error during login:', error);
+        console.log('Login Page - Error during login - Full error:', error);
+        console.error('Login Page - Error during login:', {
+          message: error.message,
+          stack: error.stack,
+          type: error.constructor.name
+        });
       }
 
       // Set a generic error message if something went wrong
       dispatch({
         type: 'auth/loginUser/rejected',
-        payload: { error: 'Login failed. Please try again.' }
+        payload: { error: 'Login failed. Please check your connection and try again.' }
       });
     }
-  }, [email, password, dispatch, router]);
+  }, [email, password, dispatch, router, clearError]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">

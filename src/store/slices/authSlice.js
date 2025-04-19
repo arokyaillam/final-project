@@ -22,22 +22,32 @@ export const loginUser = createAsyncThunk(
       return response.data;
     } catch (error) {
       if (process.env.NODE_ENV !== 'production') {
+        console.log('Auth Slice - Login error - Full error object:', error);
         console.error('Auth Slice - Login error:', {
           status: error.response?.status,
           data: error.response?.data,
-          message: error.message
+          message: error.message,
+          isLoginError: error.isLoginError || false
         });
       }
 
-      // Ensure we have a proper error response
-      const errorData = error.response?.data || { error: 'Login failed' };
-
-      // Make sure the error message is set
-      if (!errorData.error) {
-        errorData.error = 'Login failed';
+      // Handle different error scenarios
+      if (error.isLoginError) {
+        // This is a login-specific error that we've already formatted
+        return rejectWithValue(error.response?.data || { error: 'Invalid credentials' });
       }
 
-      return rejectWithValue(errorData);
+      if (error.response?.data) {
+        // We have a response with data
+        const errorData = error.response.data;
+        if (!errorData.error) {
+          errorData.error = 'Login failed';
+        }
+        return rejectWithValue(errorData);
+      }
+
+      // Fallback for network errors or other issues
+      return rejectWithValue({ error: 'Login failed. Please check your connection and try again.' });
     }
   }
 );
