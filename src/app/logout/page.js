@@ -19,17 +19,25 @@ export default function LogoutPage() {
 
     const performLogout = async () => {
       try {
-        console.log('Logout Page - Starting logout process');
+        // Only log in development
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('Logout Page - Starting logout process');
+        }
 
         // 1. Clear cookies using our utility
         if (typeof window !== 'undefined') {
-          console.log('Logout Page - Clearing cookies via utility');
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('Logout Page - Clearing cookies via utility');
+          }
           clearAuthCookies();
         }
 
         // 2. Call the logout API directly
         try {
-          console.log('Logout Page - Calling logout API');
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('Logout Page - Calling logout API');
+          }
+
           const logoutResponse = await fetch('/api/auth/logout', {
             method: 'POST',
             headers: {
@@ -38,45 +46,62 @@ export default function LogoutPage() {
           });
 
           const responseData = await logoutResponse.json();
-          console.log('Logout Page - API response:', responseData);
+
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('Logout Page - API response:', responseData);
+          }
         } catch (apiError) {
-          console.error('Logout Page - API call error:', apiError);
+          if (process.env.NODE_ENV !== 'production') {
+            console.error('Logout Page - API call error:', apiError);
+          }
           // Continue with logout process even if API call fails
         }
 
         // 3. Dispatch Redux action
         try {
-          console.log('Logout Page - Dispatching Redux action');
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('Logout Page - Dispatching Redux action');
+          }
           await dispatch(logoutUser());
         } catch (reduxError) {
-          console.error('Logout Page - Redux dispatch error:', reduxError);
+          if (process.env.NODE_ENV !== 'production') {
+            console.error('Logout Page - Redux dispatch error:', reduxError);
+          }
           // Continue with logout process even if Redux dispatch fails
         }
 
         // 4. Clear cookies manually as a fallback
         if (typeof window !== 'undefined') {
-          console.log('Logout Page - Manually clearing cookies');
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('Logout Page - Manually clearing cookies');
+          }
           document.cookie = 'token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=lax;';
           document.cookie = 'user_info=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=lax;';
         }
 
         // 5. Clear localStorage
         if (typeof window !== 'undefined') {
-          console.log('Logout Page - Clearing localStorage');
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('Logout Page - Clearing localStorage');
+          }
           localStorage.removeItem('upstox_access_token');
           localStorage.removeItem('upstox_token');
           localStorage.removeItem('user');
           localStorage.removeItem('auth');
         }
 
-        console.log('Logout Page - Logout completed, redirecting to login');
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('Logout Page - Logout completed, redirecting to login');
+        }
 
         // 6. Redirect to login page after a short delay
         setTimeout(() => {
           window.location.href = '/login';
         }, 500);
       } catch (error) {
-        console.error('Logout Page - Error during logout:', error);
+        if (process.env.NODE_ENV !== 'production') {
+          console.error('Logout Page - Error during logout:', error);
+        }
 
         // Still redirect to login page even if there's an error
         setTimeout(() => {

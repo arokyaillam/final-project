@@ -14,10 +14,8 @@ const COOKIE_OPTIONS = {
   expires: 1 // 1 day
 };
 
-// Only run debug code on the client side
-if (typeof window !== 'undefined') {
-  // Debug cookie access
-  console.log('Cookies module loaded, checking for token cookie');
+// Only run debug code on the client side in development
+if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
   try {
     const token = Cookies.get('token');
     console.log('Cookies module - Token cookie:', token ? 'Found' : 'Not found');
@@ -35,10 +33,16 @@ export const setAuthCookies = (token, user) => {
   // Only run on client side
   if (typeof window === 'undefined') return;
 
-  console.log('Cookies - Setting auth cookies');
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('Cookies - Setting auth cookies');
+  }
+
   Cookies.set(TOKEN_COOKIE, token, COOKIE_OPTIONS);
   Cookies.set(USER_COOKIE, JSON.stringify(user), COOKIE_OPTIONS);
-  console.log('Cookies - Auth cookies set successfully');
+
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('Cookies - Auth cookies set successfully');
+  }
 };
 
 /**
@@ -50,7 +54,11 @@ export const getAuthToken = () => {
   if (typeof window === 'undefined') return null;
 
   const token = Cookies.get(TOKEN_COOKIE) || null;
-  console.log('Cookies - Getting auth token:', token ? 'Found' : 'Not found');
+
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('Cookies - Getting auth token:', token ? 'Found' : 'Not found');
+  }
+
   return token;
 };
 
@@ -63,16 +71,25 @@ export const getUserFromCookies = () => {
   if (typeof window === 'undefined') return null;
 
   const userCookie = Cookies.get(USER_COOKIE);
-  console.log('Cookies - Getting user from cookies:', userCookie ? 'Found' : 'Not found');
+
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('Cookies - Getting user from cookies:', userCookie ? 'Found' : 'Not found');
+  }
 
   if (!userCookie) return null;
 
   try {
     const user = JSON.parse(userCookie);
-    console.log('Cookies - User parsed successfully');
+
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Cookies - User parsed successfully');
+    }
+
     return user;
   } catch (error) {
-    console.error('Cookies - Error parsing user cookie:', error);
+    if (process.env.NODE_ENV !== 'production') {
+      console.error('Cookies - Error parsing user cookie:', error);
+    }
     return null;
   }
 };
@@ -84,7 +101,9 @@ export const clearAuthCookies = () => {
   // Only run on client side
   if (typeof window === 'undefined') return;
 
-  console.log('Cookies Utility - Clearing auth cookies');
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('Cookies Utility - Clearing auth cookies');
+  }
 
   // Method 1: Using js-cookie library
   Cookies.remove(TOKEN_COOKIE, { path: '/' });
@@ -100,13 +119,15 @@ export const clearAuthCookies = () => {
   document.cookie = `${TOKEN_COOKIE}=; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
   document.cookie = `${USER_COOKIE}=; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
 
-  // Log the result
-  const tokenAfter = Cookies.get(TOKEN_COOKIE);
-  const userAfter = Cookies.get(USER_COOKIE);
-  console.log('Cookies Utility - After clearing:', {
-    token: tokenAfter ? 'still exists' : 'cleared',
-    user: userAfter ? 'still exists' : 'cleared'
-  });
+  // Log the result in development
+  if (process.env.NODE_ENV !== 'production') {
+    const tokenAfter = Cookies.get(TOKEN_COOKIE);
+    const userAfter = Cookies.get(USER_COOKIE);
+    console.log('Cookies Utility - After clearing:', {
+      token: tokenAfter ? 'still exists' : 'cleared',
+      user: userAfter ? 'still exists' : 'cleared'
+    });
+  }
 };
 
 /**
@@ -120,6 +141,10 @@ export const isAuthenticated = () => {
   // Direct check for token cookie
   const token = Cookies.get(TOKEN_COOKIE);
   const hasToken = !!token;
-  console.log('isAuthenticated check - Token cookie:', hasToken ? 'Found' : 'Not found');
+
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('isAuthenticated check - Token cookie:', hasToken ? 'Found' : 'Not found');
+  }
+
   return hasToken;
 };

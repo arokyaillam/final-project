@@ -20,16 +20,21 @@ api.interceptors.request.use(
       config.headers['Authorization'] = `Bearer ${token}`;
     }
 
-    console.log('API Request:', {
-      url: config.url,
-      method: config.method,
-      hasToken: !!token
-    });
+    // Only log in development
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('API Request:', {
+        url: config.url,
+        method: config.method,
+        hasToken: !!token
+      });
+    }
 
     return config;
   },
   (error) => {
-    console.error('API Request Error:', error);
+    if (process.env.NODE_ENV !== 'production') {
+      console.error('API Request Error:', error);
+    }
     return Promise.reject(error);
   }
 );
@@ -37,25 +42,32 @@ api.interceptors.request.use(
 // Response interceptor
 api.interceptors.response.use(
   (response) => {
-    console.log('API Response:', {
-      url: response.config.url,
-      status: response.status,
-      statusText: response.statusText
-    });
+    // Only log in development
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('API Response:', {
+        url: response.config.url,
+        status: response.status,
+        statusText: response.statusText
+      });
+    }
     return response;
   },
   (error) => {
     // Handle errors globally
-    console.error('API Response Error:', {
-      url: error.config?.url,
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      message: error.message
-    });
+    if (process.env.NODE_ENV !== 'production') {
+      console.error('API Response Error:', {
+        url: error.config?.url,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        message: error.message
+      });
+    }
 
     // Handle authentication errors
     if (error.response?.status === 401) {
-      console.log('Authentication error detected, redirecting to login');
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('Authentication error detected, redirecting to login');
+      }
       // Only redirect if we're in the browser
       if (typeof window !== 'undefined') {
         // Don't redirect if we're already on the login page
