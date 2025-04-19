@@ -65,8 +65,11 @@ export async function loginAction(credentials) {
     });
 
     // Also set a cookie with user info for client-side access
+    // Convert MongoDB ObjectId to string
+    const userId = user._id.toString();
+
     cookies().set('user_info', JSON.stringify({
-      id: user._id,
+      id: userId,
       email: user.email,
       lastLogin: new Date().toISOString()
     }), {
@@ -78,11 +81,12 @@ export async function loginAction(credentials) {
     });
 
     console.log('Server Action - Login successful');
-    // Return success response
+
+    // Return success response with plain objects only
     return {
       success: true,
       user: {
-        id: user._id,
+        id: userId, // Using the userId we already converted above
         email: user.email,
       },
       token
