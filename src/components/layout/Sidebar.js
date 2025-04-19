@@ -5,12 +5,14 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import { setActiveSubMenu } from '@/store/slices/navigationSlice';
+import { logoutUser } from '@/store/slices/authSlice';
 
 // Icons
-import { 
-  User, CreditCard, BarChart2, Settings, List, 
+import {
+  User, CreditCard, BarChart2, Settings, List,
   Database, TrendingUp, Plus, Package, Activity,
-  ShoppingCart, Briefcase, PieChart, BarChart, Calculator
+  ShoppingCart, Briefcase, PieChart, BarChart, Calculator,
+  LogOut
 } from 'lucide-react';
 
 const Sidebar = () => {
@@ -27,7 +29,7 @@ const Sidebar = () => {
           { id: 'funds', label: 'Funds', icon: <CreditCard className="h-5 w-5" />, path: '/dashboard/funds' },
           { id: 'profitLoss', label: 'Profit & Loss', icon: <BarChart2 className="h-5 w-5" />, path: '/dashboard/profit-loss' },
           { id: 'settings', label: 'Settings', icon: <Settings className="h-5 w-5" />, path: '/dashboard/settings' },
-          { id: 'logout', label: 'Logout', icon: <Settings className="h-5 w-5" />, path: '/login' },
+          { id: 'logout', label: 'Logout', icon: <LogOut className="h-5 w-5" />, path: '#', onClick: handleLogout },
         ];
       case 'marketData':
         return [
@@ -65,19 +67,59 @@ const Sidebar = () => {
     dispatch(setActiveSubMenu(submenu));
   };
 
+  // Handle logout
+  const handleLogout = async () => {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Sidebar - Logging out user');
+    }
+
+    try {
+      // 1. Call the logout API
+      await fetch('/api/auth/logout-direct', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      // 2. Clear cookies directly
+      document.cookie = 'token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=lax;';
+      document.cookie = 'user_info=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=lax;';
+
+      // 3. Clear localStorage
+      localStorage.removeItem('upstox_access_token');
+      localStorage.removeItem('upstox_token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('auth');
+
+      // 4. Dispatch logout action
+      dispatch(logoutUser());
+
+      // 5. Redirect to login page
+      window.location.href = '/login';
+    } catch (error) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('Sidebar - Logout error:', error);
+      }
+
+      // Even if there's an error, still try to redirect
+      window.location.href = '/login';
+    }
+  };
+
   // Set active submenu based on pathname
   useEffect(() => {
     const pathSegments = pathname.split('/');
     const lastSegment = pathSegments[pathSegments.length - 1];
-    
+
     // Convert path format to camelCase for state
     const submenuId = lastSegment
       .split('-')
-      .map((part, index) => 
+      .map((part, index) =>
         index === 0 ? part : part.charAt(0).toUpperCase() + part.slice(1)
       )
       .join('');
-    
+
     if (submenuId && submenuId !== activeSubMenu) {
       dispatch(setActiveSubMenu(submenuId));
     }
@@ -90,9 +132,9 @@ const Sidebar = () => {
       <div className="py-4">
         <div className="px-4 mb-4">
           <h2 className="text-lg font-semibold text-gray-900 capitalize">
-            {activeMainMenu === 'marketData' 
-              ? 'Market Data' 
-              : activeMainMenu === 'paperTrading' 
+            {activeMainMenu === 'marketData'
+              ? 'Market Data'
+              : activeMainMenu === 'paperTrading'
                 ? 'Paper Trading'
                 : activeMainMenu === 'optionData'
                   ? 'Option Data'
@@ -101,16 +143,36 @@ const Sidebar = () => {
         </div>
         <nav className="space-y-1 px-2">
           {getSubmenuItems().map((item) => (
-            <Link
-              key={item.id}
-              href={item.path}
-              onClick={() => handleSubmenuClick(item.id)}
-              className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md ${
-                activeSubMenu === item.id
-                  ? 'bg-indigo-100 text-indigo-700'
-                  : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
-              }`}
-            >
+            item.id === 'logout' ? (
+              <button
+                key={item.id}
+                onClick={item.onClick}
+                className={`group flex items-center w-full px-2 py-2 text-sm font-medium rounded-md ${
+                  activeSubMenu === item.id
+                    ? 'bg-indigo-100 text-indigo-700'
+                    : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+                }`}
+              >
+                <div className={`mr-3 ${
+                  activeSubMenu === item.id
+                    ? 'text-indigo-700'
+                    : 'text-gray-500 group-hover:text-gray-700'
+                }`}>
+                  {item.icon}
+                </div>
+                {item.label}
+              </button>
+            ) : (
+              <Link
+                key={item.id}
+                href={item.path}
+                onClick={() => handleSubmenuClick(item.id)}
+                className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md ${
+                  activeSubMenu === item.id
+                    ? 'bg-indigo-100 text-indigo-700'
+                    : 'text-gray-700 hover:text-gray-900 hover:bg-gray-100'
+                }`}
+              >
               <div className={`mr-3 ${
                 activeSubMenu === item.id
                   ? 'text-indigo-700'
@@ -119,7 +181,8 @@ const Sidebar = () => {
                 {item.icon}
               </div>
               {item.label}
-            </Link>
+              </Link>
+            )
           ))}
         </nav>
       </div>
