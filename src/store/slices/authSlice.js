@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '@/services/api';
 import { getAuthToken, getUserFromCookies, clearAuthCookies, setAuthCookies } from '@/lib/cookies';
+import Cookies from 'js-cookie';
 
 // Async thunks
 export const loginUser = createAsyncThunk(
@@ -37,33 +38,55 @@ export const logoutUser = createAsyncThunk(
   'auth/logout',
   async (_, { rejectWithValue }) => {
     try {
-      console.log('Auth Slice - Logging out user');
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('Auth Slice - Logging out user');
+      }
 
       // 1. Clear auth cookies using our utility function
-      console.log('Auth Slice - Clearing client-side cookies via utility');
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('Auth Slice - Clearing client-side cookies via utility');
+      }
       clearAuthCookies();
 
       // 2. Clear cookies by making a request to the server
-      console.log('Auth Slice - Sending logout request to server');
-      const response = await api.post('/auth/logout');
-      console.log('Auth Slice - Server logout response:', response.data);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('Auth Slice - Sending logout request to server');
+      }
+
+      try {
+        const response = await api.post('/auth/logout-direct');
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('Auth Slice - Server logout response:', response.data);
+        }
+      } catch (apiError) {
+        if (process.env.NODE_ENV !== 'production') {
+          console.error('Auth Slice - Server logout API error:', apiError);
+        }
+        // Continue with logout process even if API call fails
+      }
 
       // 3. Manually clear cookies using js-cookie as a fallback
-      console.log('Auth Slice - Manually clearing cookies via js-cookie');
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('Auth Slice - Manually clearing cookies via js-cookie');
+      }
       if (typeof window !== 'undefined') {
         Cookies.remove('token', { path: '/' });
         Cookies.remove('user_info', { path: '/' });
       }
 
       // 4. Manually clear cookies using document.cookie as a second fallback
-      console.log('Auth Slice - Manually clearing cookies via document.cookie');
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('Auth Slice - Manually clearing cookies via document.cookie');
+      }
       if (typeof window !== 'undefined') {
         document.cookie = 'token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=lax;';
         document.cookie = 'user_info=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=lax;';
       }
 
       // 5. Clear localStorage items related to auth
-      console.log('Auth Slice - Clearing localStorage');
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('Auth Slice - Clearing localStorage');
+      }
       if (typeof window !== 'undefined') {
         localStorage.removeItem('upstox_access_token');
         localStorage.removeItem('upstox_token');
@@ -73,15 +96,21 @@ export const logoutUser = createAsyncThunk(
       }
 
       // 6. Clear sessionStorage items as well
-      console.log('Auth Slice - Clearing sessionStorage');
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('Auth Slice - Clearing sessionStorage');
+      }
       if (typeof window !== 'undefined') {
         sessionStorage.clear();
       }
 
-      console.log('Auth Slice - Logout successful');
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('Auth Slice - Logout successful');
+      }
       return { success: true };
     } catch (error) {
-      console.error('Auth Slice - Logout error:', error);
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('Auth Slice - Logout error:', error);
+      }
 
       // Even if the server request fails, we still want to clear client-side state
       clearAuthCookies();
@@ -99,6 +128,8 @@ export const logoutUser = createAsyncThunk(
         // Clear storage
         localStorage.removeItem('upstox_access_token');
         localStorage.removeItem('upstox_token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('auth');
         sessionStorage.clear();
       }
 
@@ -112,27 +143,35 @@ export const checkAuth = createAsyncThunk(
   'auth/check',
   async (_, { rejectWithValue }) => {
     try {
-      console.log('Auth Slice - Checking authentication from cookies');
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('Auth Slice - Checking authentication from cookies');
+      }
 
       // Get user info from cookies
       const user = getUserFromCookies();
       const token = getAuthToken();
 
-      console.log('Auth Slice - Cookie check results:', {
-        userFound: !!user,
-        tokenFound: !!token
-      });
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('Auth Slice - Cookie check results:', {
+          userFound: !!user,
+          tokenFound: !!token
+        });
+      }
 
       if (!user || !token) {
-        console.log('Auth Slice - Missing user or token in cookies');
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('Auth Slice - Missing user or token in cookies');
+        }
         return rejectWithValue({ error: 'Not authenticated' });
       }
 
-      console.log('Auth Slice - Verifying token with server');
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('Auth Slice - Verifying token with server');
+      }
 
       // Verify token with server - add a timeout to prevent hanging
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 4000); // 4 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
 
       try {
         // Verify token with server
@@ -143,24 +182,47 @@ export const checkAuth = createAsyncThunk(
         // Clear the timeout since we got a response
         clearTimeout(timeoutId);
 
-        console.log('Auth Slice - Token verified successfully with server');
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('Auth Slice - Token verified successfully with server');
+        }
         return { user: response.data.user, token };
       } catch (fetchError) {
         clearTimeout(timeoutId);
 
-        if (fetchError.name === 'AbortError') {
-          console.error('Auth Slice - Token verification request timed out');
+        if (fetchError.name === 'AbortError' || fetchError.message === 'canceled') {
+          if (process.env.NODE_ENV !== 'production') {
+            console.error('Auth Slice - Token verification request timed out or canceled');
+          }
+          // If we have a token and user in cookies, assume they're valid even if verification times out
+          if (user && token) {
+            if (process.env.NODE_ENV !== 'production') {
+              console.log('Auth Slice - Using cached credentials despite timeout');
+            }
+            return { user, token };
+          }
           return rejectWithValue({ error: 'Verification timed out' });
         }
 
         throw fetchError; // Re-throw to be caught by the outer catch
       }
     } catch (error) {
-      console.error('Auth Slice - Authentication check failed:', error.message || 'Unknown error');
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('Auth Slice - Authentication check failed:', error.message || 'Unknown error');
+      }
 
-      // Clear cookies if verification fails
-      console.log('Auth Slice - Clearing auth cookies due to verification failure');
-      clearAuthCookies();
+      // Don't clear cookies for timeout/cancel errors
+      if (error.message !== 'canceled' && error.name !== 'AbortError') {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('Auth Slice - Clearing auth cookies due to verification failure');
+        }
+        clearAuthCookies();
+      } else if (user && token) {
+        // If it's just a timeout but we have credentials, use them
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('Auth Slice - Using cached credentials despite error');
+        }
+        return { user, token };
+      }
 
       return rejectWithValue({ error: 'Session expired' });
     }
@@ -261,8 +323,10 @@ const authSlice = createSlice({
         state.token = action.payload.token;
         state.sessionChecked = true;
 
-        // Log the user data for debugging
-        console.log('Auth Slice - User data after checkAuth:', action.payload.user);
+        // Log the user data for debugging in development
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('Auth Slice - User data after checkAuth:', action.payload.user);
+        }
       })
       .addCase(checkAuth.rejected, (state) => {
         state.loading = false;

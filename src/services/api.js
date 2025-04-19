@@ -55,12 +55,20 @@ api.interceptors.response.use(
   (error) => {
     // Handle errors globally
     if (process.env.NODE_ENV !== 'production') {
-      console.error('API Response Error:', {
-        url: error.config?.url,
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        message: error.message
-      });
+      // Don't log canceled requests as errors
+      if (error.message !== 'canceled' && error.name !== 'AbortError') {
+        console.error('API Response Error:', {
+          url: error.config?.url,
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          message: error.message
+        });
+      } else {
+        console.log('API Request canceled:', {
+          url: error.config?.url,
+          message: error.message
+        });
+      }
     }
 
     // Handle authentication errors
@@ -75,6 +83,19 @@ api.interceptors.response.use(
           window.location.href = '/login';
         }
       }
+    }
+
+    // Don't reject canceled requests in certain cases
+    if ((error.message === 'canceled' || error.name === 'AbortError') &&
+        error.config?.url === '/api/auth/verify') {
+      // For auth verification, we'll handle this in the auth slice
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('Auth verification request canceled, handling gracefully');
+      }
+      // Return a default response instead of rejecting
+      return Promise.resolve({
+        data: { status: 'canceled', message: 'Request canceled but proceeding' }
+      });
     }
 
     return Promise.reject(error);
