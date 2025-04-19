@@ -10,40 +10,51 @@ import { signToken } from '@/lib/auth/jwt';
  */
 export async function loginAction(credentials) {
   try {
+    console.log('Server Action - Login attempt started');
     const { email, password } = credentials;
-    
+
     // Validate input
     if (!email || !password) {
+      console.log('Server Action - Missing email or password');
       return {
         success: false,
         error: 'Email and password are required'
       };
     }
 
+    console.log('Server Action - Connecting to database');
     // Connect to database
     await connectToDatabase();
 
+    console.log('Server Action - Finding user:', email);
     // Find user
     const user = await User.findOne({ email });
     if (!user) {
+      console.log('Server Action - User not found');
       return {
         success: false,
         error: 'Invalid credentials'
       };
     }
 
+    console.log('Server Action - Verifying password');
     // Verify password
     const isPasswordValid = await user.comparePassword(password);
     if (!isPasswordValid) {
+      console.log('Server Action - Invalid password');
       return {
         success: false,
         error: 'Invalid credentials'
       };
     }
 
+    console.log('Server Action - Password verified successfully');
+
+    console.log('Server Action - Generating JWT token');
     // Generate JWT token
     const token = signToken({ userId: user._id });
 
+    console.log('Server Action - Setting cookies');
     // Set cookies
     cookies().set('token', token, {
       httpOnly: false,
@@ -66,6 +77,7 @@ export async function loginAction(credentials) {
       sameSite: 'lax',
     });
 
+    console.log('Server Action - Login successful');
     // Return success response
     return {
       success: true,
@@ -76,10 +88,12 @@ export async function loginAction(credentials) {
       token
     };
   } catch (error) {
-    console.error('Login action error:', error);
+    console.error('Server Action - Login error:', error);
+    // Return a more detailed error message
     return {
       success: false,
-      error: 'Internal server error'
+      error: 'Internal server error',
+      details: error.message
     };
   }
 }

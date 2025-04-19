@@ -105,117 +105,67 @@ export default function LoginPage() {
 
     try {
       if (process.env.NODE_ENV !== 'production') {
-        console.log('Login Page - Attempting login with:', { email });
+        console.log('Login Page - Attempting login with server action:', { email });
       }
 
       // Clear any previous errors
       dispatch(clearError());
 
-      try {
-        // First try with Redux/API approach
-        const resultAction = await dispatch(loginUser({ email, password }));
+      // Use server action directly (bypass API)
+      const result = await loginAction({ email, password });
 
-        if (loginUser.fulfilled.match(resultAction)) {
-          if (process.env.NODE_ENV !== 'production') {
-            console.log('Login Page - Login successful via API');
-          }
-
-          // Check if we have a stored callback code
-          const storedCallbackCode = localStorage.getItem('upstox_callback_code');
-
-          if (storedCallbackCode) {
-            // Clear the stored code
-            localStorage.removeItem('upstox_callback_code');
-
-            // Redirect to the callback URL with the code and userId
-            router.push(`/api/upstox/callback?code=${storedCallbackCode}&userId=${resultAction.payload.user.id}`);
-          } else {
-            // Normal login flow
-            router.push('/dashboard');
-          }
-        } else if (loginUser.rejected.match(resultAction)) {
-          if (process.env.NODE_ENV !== 'production') {
-            console.log('Login Page - Login rejected via API:', resultAction.payload);
-          }
-
-          // Check if the error is about invalid credentials
-          if (resultAction.payload?.error === 'Invalid credentials') {
-            if (process.env.NODE_ENV !== 'production') {
-              console.log('Login Page - Invalid credentials detected, offering account creation');
-            }
-
-            // Show a confirmation dialog to create a new account
-            const confirmCreate = window.confirm(
-              'Account not found. Would you like to create a new account with this email?'
-            );
-
-            if (confirmCreate) {
-              setShouldRedirectToRegister(true);
-            }
-          } else {
-            if (process.env.NODE_ENV !== 'production') {
-              console.log('Login Page - Login error:', resultAction.payload);
-            }
-          }
-        }
-      } catch (apiError) {
+      if (result.success) {
         if (process.env.NODE_ENV !== 'production') {
-          console.log('Login Page - API login failed, trying server action:', apiError);
+          console.log('Login Page - Login successful via server action');
         }
 
-        // If the API approach fails, try with server action
-        try {
-          const result = await loginAction({ email, password });
+        // Set cookies on the client side as well
+        setAuthCookies(result.token, result.user);
 
-          if (result.success) {
-            if (process.env.NODE_ENV !== 'production') {
-              console.log('Login Page - Login successful via server action');
-            }
+        // Update Redux state
+        dispatch({
+          type: 'auth/loginUser/fulfilled',
+          payload: result
+        });
 
-            // Set cookies on the client side as well
-            setAuthCookies(result.token, result.user);
+        // Check if we have a stored callback code
+        const storedCallbackCode = localStorage.getItem('upstox_callback_code');
 
-            // Update Redux state
-            dispatch({
-              type: 'auth/loginUser/fulfilled',
-              payload: result
-            });
+        if (storedCallbackCode) {
+          // Clear the stored code
+          localStorage.removeItem('upstox_callback_code');
 
-            // Redirect to dashboard
-            router.push('/dashboard');
-          } else {
-            if (process.env.NODE_ENV !== 'production') {
-              console.log('Login Page - Login failed via server action:', result);
-            }
+          // Redirect to the callback URL with the code and userId
+          router.push(`/api/upstox/callback?code=${storedCallbackCode}&userId=${result.user.id}`);
+        } else {
+          // Normal login flow
+          router.push('/dashboard');
+        }
+      } else {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('Login Page - Login failed via server action:', result);
+        }
 
-            // Set error in Redux state
-            dispatch({
-              type: 'auth/loginUser/rejected',
-              payload: { error: result.error || 'Login failed' }
-            });
+        // Set error in Redux state
+        dispatch({
+          type: 'auth/loginUser/rejected',
+          payload: { error: result.error || 'Login failed' }
+        });
 
-            // Check if the error is about invalid credentials
-            if (result.error === 'Invalid credentials') {
-              // Show a confirmation dialog to create a new account
-              const confirmCreate = window.confirm(
-                'Account not found. Would you like to create a new account with this email?'
-              );
-
-              if (confirmCreate) {
-                setShouldRedirectToRegister(true);
-              }
-            }
-          }
-        } catch (serverActionError) {
+        // Check if the error is about invalid credentials
+        if (result.error === 'Invalid credentials') {
           if (process.env.NODE_ENV !== 'production') {
-            console.error('Login Page - Server action failed:', serverActionError);
+            console.log('Login Page - Invalid credentials detected, offering account creation');
           }
 
-          // Set a generic error message if both approaches fail
-          dispatch({
-            type: 'auth/loginUser/rejected',
-            payload: { error: 'Login failed. Please try again later.' }
-          });
+          // Show a confirmation dialog to create a new account
+          const confirmCreate = window.confirm(
+            'Account not found. Would you like to create a new account with this email?'
+          );
+
+          if (confirmCreate) {
+            setShouldRedirectToRegister(true);
+          }
         }
       }
     } catch (error) {
